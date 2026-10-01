@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div data-screen-label="Approval queue" style="padding:20px 24px 40px; display:flex; flex-direction:column; gap:14px;">
+  <div>
+    <h1 style="font-size:18px; font-weight:600; margin:0; line-height:1.3;">Approval queue</h1>
+    <p style="margin:2px 0 0; color:#5B6272;">S1 and S2 tickets waiting for an analyst to approve or reject. Decided tickets move to <a href="#/tickets">Tickets</a>.</p>
+  </div>
+  <div style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px; overflow-x:auto;">
+    <sc-if value="{{ has }}" hint-placeholder-val="{{ true }}">
+      <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+        <thead><tr>
+          <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;">Ticket</th>
+          <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Summary</th>
+          <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Host</th>
+          <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Severity</th>
+          <th style="text-align:right; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Alarms</th>
+          <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;">Start time</th>
+          <th style="background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3;"><span style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0);">Actions</span></th>
+        </tr></thead>
+        <tbody>
+          <sc-for list="{{ rows }}" as="t" hint-placeholder-count="1">
+            <tr>
+              <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap;">{{ t.ticket_number }}</td>
+              <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; min-width:260px;">{{ t.summary }}</td>
+              <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap;">{{ t.host }}</td>
+              <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;"><span style="{{ t.sevTag }}">{{ t.severity }}</span></td>
+              <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; text-align:right; font-variant-numeric:tabular-nums;">{{ t.alarm_count }}</td>
+              <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap; font-variant-numeric:tabular-nums;">{{ t.start }}</td>
+              <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; text-align:right;">
+                <button type="button" onClick="{{ t.open }}" style="height:26px; padding:0 10px; background:#C4441A; color:#FFFFFF; border:1px solid #C4441A; border-radius:4px; font-size:12px; font-weight:500; cursor:pointer;" style-hover="background:#A83A16;">Open</button>
+              </td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </sc-if>
+    <sc-if value="{{ none }}" hint-placeholder-val="{{ false }}">
+      <p style="margin:0; padding:14px; color:#5B6272;">Nothing is waiting for approval.</p>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const app = this.props.app; const L = window.LLA;
+    const rows = app.db.tickets.filter(t => t.approval_status === 'PENDING').sort((a, b) => a.start_time < b.start_time ? -1 : 1).map(t => Object.assign({}, t, {
+      sevTag: L.tag(t.severity), start: L.fmtTime(t.start_time), open: () => app.nav('/approvals/' + t.ticket_id)
+    }));
+    return { rows, has: rows.length > 0, none: rows.length === 0 };
+  }
+}
+</script>
+</body>
+</html>

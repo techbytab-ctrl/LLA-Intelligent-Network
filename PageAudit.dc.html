@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div data-screen-label="Audit trail" style="padding:20px 24px 40px; display:flex; flex-direction:column; gap:14px;">
+  <div>
+    <h1 style="font-size:18px; font-weight:600; margin:0; line-height:1.3;">Audit trail</h1>
+    <p style="margin:2px 0 0; color:#5B6272;">Every decision made by an agent or an analyst, in the order it happened.</p>
+  </div>
+  <div role="note" style="border:1px solid #D9DCE3; background:#FFFFFF; border-radius:4px; padding:8px 12px; font-size:12.5px; color:#1F2430;">Audit events are append only. They cannot be changed or deleted by anyone, including administrators.</div>
+
+  <div style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px; padding:10px 12px; display:flex; flex-direction:column; gap:10px;">
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:8px 10px;">
+      <label style="display:flex; flex-direction:column; gap:3px; font-size:11.5px; color:#4A5160; grid-column:span 2;">
+        <span>Search reason, actor, IDs</span>
+        <input type="search" value="{{ text }}" onChange="{{ onText }}" placeholder="For example: TCK-000107" style="height:30px; border:1px solid #C9CDD6; border-radius:4px; padding:0 8px; background:#FFFFFF;">
+      </label>
+      <sc-for list="{{ filters }}" as="f" hint-placeholder-count="3">
+        <label style="display:flex; flex-direction:column; gap:3px; font-size:11.5px; color:#4A5160;">
+          <span>{{ f.label }}</span>
+          <select value="{{ f.value }}" onChange="{{ f.onChange }}" style="height:30px; border:1px solid #C9CDD6; border-radius:4px; padding:0 6px; background:#FFFFFF;">
+            <sc-for list="{{ f.options }}" as="o" hint-placeholder-count="3"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+          </select>
+        </label>
+      </sc-for>
+      <label style="display:flex; flex-direction:column; gap:3px; font-size:11.5px; color:#4A5160;">
+        <span>Event time from</span>
+        <input type="date" value="{{ from }}" onChange="{{ onFrom }}" style="height:30px; border:1px solid #C9CDD6; border-radius:4px; padding:0 6px; background:#FFFFFF;">
+      </label>
+      <label style="display:flex; flex-direction:column; gap:3px; font-size:11.5px; color:#4A5160;">
+        <span>Event time to</span>
+        <input type="date" value="{{ to }}" onChange="{{ onTo }}" style="height:30px; border:1px solid #C9CDD6; border-radius:4px; padding:0 6px; background:#FFFFFF;">
+      </label>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+      <span style="font-size:12px; color:#4A5160;">{{ countText }}</span>
+      <button type="button" onClick="{{ reset }}" style="height:28px; padding:0 10px; background:#FFFFFF; color:#1F2430; border:1px solid #C9CDD6; border-radius:4px; font-size:12px; font-weight:500; cursor:pointer;" style-hover="background:#F5F6F8;">Clear filters</button>
+    </div>
+  </div>
+
+  <div style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px;">
+    <div style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+        <thead><tr>
+          <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;"><button type="button" onClick="{{ toggleSort }}" style="border:0; background:transparent; padding:0; font:inherit; font-weight:600; color:inherit; cursor:pointer;">Event time <span aria-hidden="true" style="color:#8A90A0; font-size:10px;">{{ sortInd }}</span></button></th>
+          <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Stage</th>
+          <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Outcome</th>
+          <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Reason</th>
+          <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Actor</th>
+          <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Links</th>
+          <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Details</th>
+        </tr></thead>
+        <tbody>
+          <sc-for list="{{ rows }}" as="e" hint-placeholder-count="10">
+            <tr>
+              <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap; vertical-align:top; font-variant-numeric:tabular-nums;">{{ e.time }}</td>
+              <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2; vertical-align:top; font-size:12px;">{{ e.stage }}</td>
+              <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2; vertical-align:top;"><span style="{{ e.tag }}">{{ e.outcome }}</span></td>
+              <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2; vertical-align:top; min-width:260px;">{{ e.reason }}</td>
+              <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2; vertical-align:top; white-space:nowrap;">{{ e.actor }}</td>
+              <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2; vertical-align:top;">
+                <div style="display:flex; flex-wrap:wrap; gap:4px 10px; min-width:140px;">
+                  <sc-for list="{{ e.links }}" as="l" hint-placeholder-count="2"><a href="{{ l.href }}" style="white-space:nowrap;">{{ l.label }}</a></sc-for>
+                </div>
+              </td>
+              <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2; vertical-align:top; white-space:nowrap;">
+                <sc-if value="{{ e.hasDetails }}" hint-placeholder-val="{{ true }}">
+                  <button type="button" aria-expanded="{{ e.open }}" onClick="{{ e.toggle }}" style="border:0; background:transparent; padding:0; color:#B03C14; cursor:pointer; font-size:12.5px;" style-hover="text-decoration:underline;">{{ e.toggleText }}</button>
+                </sc-if>
+              </td>
+            </tr>
+            <sc-if value="{{ e.open }}" hint-placeholder-val="{{ false }}">
+              <tr>
+                <td colSpan="7" style="padding:0 10px 10px; border-bottom:1px solid #ECEEF2; background:#FBFBFC;">
+                  <pre style="margin:8px 0 0; padding:8px 10px; background:#F7F8FA; border:1px solid #ECEEF2; border-radius:4px; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:11.5px; line-height:1.5; white-space:pre-wrap;">{{ e.json }}</pre>
+                </td>
+              </tr>
+            </sc-if>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+    <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><p style="margin:0; padding:14px; color:#5B6272;">No audit events match these filters.</p></sc-if>
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 12px; border-top:1px solid #ECEEF2; flex-wrap:wrap; font-size:12px; color:#4A5160;">
+      <label style="display:flex; align-items:center; gap:6px;">
+        <span>Rows per page</span>
+        <select value="{{ pageSize }}" onChange="{{ onPageSize }}" style="height:26px; border:1px solid #C9CDD6; border-radius:4px; padding:0 4px; background:#FFFFFF; font-size:12px;">
+          <option value="25">25</option><option value="50">50</option><option value="100">100</option>
+        </select>
+      </label>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span>{{ pageText }}</span>
+        <button type="button" onClick="{{ prev }}" disabled="{{ noPrev }}" style="height:26px; padding:0 10px; background:#FFFFFF; color:#1F2430; border:1px solid #C9CDD6; border-radius:4px; font-size:12px; cursor:pointer;" style-hover="background:#F5F6F8;">Previous</button>
+        <button type="button" onClick="{{ next }}" disabled="{{ noNext }}" style="height:26px; padding:0 10px; background:#FFFFFF; color:#1F2430; border:1px solid #C9CDD6; border-radius:4px; font-size:12px; cursor:pointer;" style-hover="background:#F5F6F8;">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  blank = () => ({ text: '', stage: '', outcome: '', actor: '', from: '', to: '' });
+  state = { f: this.blank(), open: {}, page: 1, pageSize: 25, dir: 'desc' };
+  setF = (k, v) => this.setState(s => ({ f: Object.assign({}, s.f, { [k]: v }), page: 1 }));
+  renderVals() {
+    const app = this.props.app; const db = app.db; const L = window.LLA;
+    const { f, page, pageSize, dir } = this.state;
+    const code = id => { const i = db.incidents.find(x => x.incident_id === id); return i ? i.incident_code : 'Incident ' + id; };
+    const tnum = id => { const t = db.tickets.find(x => x.ticket_id === id); return t ? t.ticket_number : 'Ticket ' + id; };
+    const q = f.text.trim().toLowerCase();
+    const list = db.audit.filter(e => {
+      if (f.stage && e.stage !== f.stage) return false;
+      if (f.outcome && e.outcome !== f.outcome) return false;
+      if (f.actor && e.actor !== f.actor) return false;
+      if (!L.inRange(e.event_time, f.from, f.to)) return false;
+      if (q) {
+        const hay = [e.reason, e.actor, e.stage, e.outcome, e.upload_id && 'upload ' + e.upload_id, e.alarm_id, e.incident_id && code(e.incident_id), e.ticket_id && tnum(e.ticket_id)].filter(Boolean).join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    }).sort((a, b) => (a.event_time < b.event_time ? -1 : a.event_time > b.event_time ? 1 : a.audit_id - b.audit_id) * (dir === 'asc' ? 1 : -1));
+    const pages = Math.max(1, Math.ceil(list.length / pageSize)); const pg = Math.min(page, pages);
+    const rows = list.slice((pg - 1) * pageSize, pg * pageSize).map(e => {
+      const open = !!this.state.open[e.audit_id];
+      const links = [];
+      if (e.upload_id) links.push({ label: 'Upload ' + e.upload_id, href: '#/uploads/' + e.upload_id });
+      if (e.alarm_id) links.push({ label: 'Alarm ' + e.alarm_id, href: '#/alarms?alarm=' + e.alarm_id });
+      if (e.incident_id) links.push({ label: code(e.incident_id), href: '#/incidents/' + e.incident_id });
+      if (e.ticket_id) links.push({ label: tnum(e.ticket_id), href: '#/tickets/' + e.ticket_id });
+      return {
+        time: L.fmtTime(e.event_time), stage: e.stage, outcome: e.outcome, tag: L.tag(e.outcome), reason: e.reason || 'No reason recorded', actor: e.actor, links,
+        hasDetails: !!e.details, open, toggleText: open ? 'Hide' : 'Show', json: L.json(Object.assign({ audit_id: e.audit_id }, e.details || {})),
+        toggle: () => this.setState(s => ({ open: Object.assign({}, s.open, { [e.audit_id]: !s.open[e.audit_id] }) }))
+      };
+    });
+    const filters = [
+      { label: 'Stage', value: f.stage, options: L.opts(['NORMALIZATION', 'MAINTENANCE', 'DEDUP', 'DEBOUNCE', 'CORRELATION', 'TICKETING']), onChange: e => this.setF('stage', e.target.value) },
+      { label: 'Outcome', value: f.outcome, options: L.opts(['LOADED', 'UPDATED', 'SKIPPED_EXISTING', 'REJECTED', 'SUPPRESSED_MAINTENANCE', 'SUPPRESSED_DEDUP', 'SUPPRESSED_DEBOUNCE', 'SURVIVED', 'GROUPED', 'TICKET_CREATED', 'APPROVED']), onChange: e => this.setF('outcome', e.target.value) },
+      { label: 'Actor', value: f.actor, options: L.opts(L.uniq(['agent:normalization', 'agent:dedup', 'agent:correlation', 'agent:ticketing'].concat(db.audit.map(e => e.actor)))), onChange: e => this.setF('actor', e.target.value) }
+    ];
+    const from = list.length ? (pg - 1) * pageSize + 1 : 0;
+    return {
+      text: f.text, onText: e => this.setF('text', e.target.value), filters,
+      from: f.from, to: f.to, onFrom: e => this.setF('from', e.target.value), onTo: e => this.setF('to', e.target.value),
+      reset: () => this.setState({ f: this.blank(), page: 1 }),
+      countText: `${list.length} of ${db.audit.length} events`, rows, empty: list.length === 0,
+      sortInd: dir === 'asc' ? '▲' : '▼', toggleSort: () => this.setState({ dir: dir === 'asc' ? 'desc' : 'asc' }),
+      pageSize: String(pageSize), onPageSize: e => this.setState({ pageSize: Number(e.target.value), page: 1 }),
+      pageText: `${from}–${Math.min(pg * pageSize, list.length)} of ${list.length} · page ${pg} of ${pages}`,
+      prev: () => this.setState({ page: Math.max(1, pg - 1) }), next: () => this.setState({ page: Math.min(pages, pg + 1) }),
+      noPrev: pg <= 1, noNext: pg >= pages
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>LLA Network Alarm Engine</title>
+<style>
+html, body { margin: 0; padding: 0; background: #F5F6F8; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Helvetica Neue", sans-serif; font-size: 13px; color: #1F2430; -webkit-font-smoothing: antialiased; }
+* { box-sizing: border-box; }
+a { color: #B03C14; text-decoration: none; }
+a:hover { color: #8A2E0F; text-decoration: underline; }
+:focus-visible { outline: 2px solid #C4441A; outline-offset: 1px; }
+button, input, select, textarea { font-family: inherit; font-size: 13px; color: #1F2430; }
+button { white-space: nowrap; }
+@keyframes llaspin { to { transform: rotate(360deg); } }
+</style>
+<script src="mock-data.js"></script>
+<script src="lib.js"></script>
+</helmet>
+<div style="display:grid; grid-template-columns:216px minmax(0,1fr); min-height:100vh; background:#F5F6F8;">
+  <aside style="background:#FFFFFF; border-right:1px solid #D9DCE3; position:sticky; top:0; align-self:start; height:100vh; display:flex; flex-direction:column; overflow-y:auto;">
+    <a href="#/" aria-label="LLA Network Alarm Engine, go to dashboard" style="display:flex; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px solid #ECEEF2; text-decoration:none;">
+      <img src="assets/lla-logo.png" alt="Liberty Latin America" style="height:38px; width:auto; display:block; flex:none;">
+      <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+        <div style="font-size:12px; font-weight:600; color:#1F2430; line-height:16px; white-space:nowrap;">Network Alarm Engine</div>
+        <div style="font-size:11.5px; color:#5B6272; line-height:15px;">B2B NOC</div>
+      </div>
+    </a>
+    <nav aria-label="Main" style="display:flex; flex-direction:column; gap:2px; padding:10px 8px;">
+      <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="8">
+        <a href="{{ n.href }}" aria-current="{{ n.current }}" style="{{ n.style }}">
+          <span>{{ n.label }}</span>
+          <sc-if value="{{ n.showBadge }}" hint-placeholder-val="{{ false }}">
+            <span aria-label="{{ n.badgeLabel }}" style="min-width:20px; text-align:center; background:#C4441A; color:#FFFFFF; font-size:11px; font-weight:600; line-height:18px; padding:0 6px; border-radius:9px;">{{ n.badge }}</span>
+          </sc-if>
+        </a>
+      </sc-for>
+    </nav>
+    <div style="margin-top:auto; padding:12px 16px; border-top:1px solid #ECEEF2; font-size:11.5px; color:#5B6272; line-height:1.5;"></div>
+  </aside>
+  <div style="display:flex; flex-direction:column; min-width:0;">
+    <header style="height:48px; background:#FFFFFF; border-bottom:1px solid #D9DCE3; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:0 20px; position:sticky; top:0; z-index:20;">
+      <div style="position:relative; width:340px; max-width:50vw;">
+        <input type="search" aria-label="Search host, ticket number or incident code" placeholder="Search host, ticket number, incident code" value="{{ q }}" onChange="{{ onSearch }}" onKeyDown="{{ onSearchKey }}" onFocus="{{ openSearch }}" onBlur="{{ closeSearchSoon }}" style="width:100%; height:30px; border:1px solid #C9CDD6; border-radius:4px; padding:0 10px; background:#F9FAFB;">
+        <sc-if value="{{ showResults }}" hint-placeholder-val="{{ false }}">
+          <div role="listbox" style="position:absolute; top:34px; left:0; right:0; background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px; box-shadow:0 4px 12px rgba(20,24,40,0.12); padding:4px 0; max-height:320px; overflow:auto;">
+            <sc-for list="{{ results }}" as="res" hint-placeholder-count="3">
+              <button type="button" onMouseDown="{{ res.go }}" onKeyDown="{{ res.key }}" style="display:flex; width:100%; align-items:center; justify-content:space-between; gap:12px; padding:6px 10px; border:0; background:transparent; text-align:left; cursor:pointer;" style-hover="background:#F5F6F8;">
+                <span style="font-weight:500;">{{ res.label }}</span>
+                <span style="font-size:11.5px; color:#5B6272;">{{ res.kind }}</span>
+              </button>
+            </sc-for>
+            <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:6px 10px; color:#5B6272;">No host, ticket or incident matches.</div>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:12px; color:#5B6272;">Analyst</span>
+        <span style="width:26px; height:26px; border-radius:50%; background:#ECEEF2; border:1px solid #D9DCE3; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; color:#4A5160;">AN</span>
+        <span style="font-weight:600;">{{ analyst }}</span>
+      </div>
+    </header>
+    <main style="flex:1; min-width:0;">
+      <sc-if value="{{ notReady }}" hint-placeholder-val="{{ true }}">
+        <div style="padding:24px; color:#5B6272;">Loading data</div>
+      </sc-if>
+      <sc-if value="{{ r.dashboard }}" hint-placeholder-val="{{ false }}"><dc-import name="PageDashboard" app="{{ app }}" hint-size="100%,600px"></dc-import></sc-if>
+      <sc-if value="{{ r.uploads }}" hint-placeholder-val="{{ false }}"><dc-import name="PageUploads" app="{{ app }}" hint-size="100%,400px"></dc-import></sc-if>
+      <sc-if value="{{ r.uploadNew }}" hint-placeholder-val="{{ false }}"><dc-import name="PageUploadNew" app="{{ app }}" hint-size="100%,400px"></dc-import></sc-if>
+      <sc-if value="{{ r.uploadDetail }}" hint-placeholder-val="{{ false }}"><dc-import name="PageUploadDetail" app="{{ app }}" hint-size="100%,600px"></dc-import></sc-if>
+      <sc-if value="{{ r.agentPipeline }}" hint-placeholder-val="{{ false }}"><dc-import name="PageAgentPipeline" app="{{ app }}" hint-size="100%,700px"></dc-import></sc-if>
+      <sc-if value="{{ r.alarms }}" hint-placeholder-val="{{ false }}"><dc-import name="PageAlarms" app="{{ app }}" hint-size="100%,600px"></dc-import></sc-if>
+      <sc-if value="{{ r.incidents }}" hint-placeholder-val="{{ false }}"><dc-import name="PageIncidents" app="{{ app }}" hint-size="100%,400px"></dc-import></sc-if>
+      <sc-if value="{{ r.incidentDetail }}" hint-placeholder-val="{{ false }}"><dc-import name="PageIncidentDetail" app="{{ app }}" hint-size="100%,600px"></dc-import></sc-if>
+      <sc-if value="{{ r.tickets }}" hint-placeholder-val="{{ false }}"><dc-import name="PageTickets" app="{{ app }}" hint-size="100%,400px"></dc-import></sc-if>
+      <sc-if value="{{ r.ticketDetail }}" hint-placeholder-val="{{ false }}"><dc-import name="PageTicketDetail" app="{{ app }}" hint-size="100%,600px"></dc-import></sc-if>
+      <sc-if value="{{ r.approvals }}" hint-placeholder-val="{{ false }}"><dc-import name="PageApprovals" app="{{ app }}" hint-size="100%,400px"></dc-import></sc-if>
+      <sc-if value="{{ r.audit }}" hint-placeholder-val="{{ false }}"><dc-import name="PageAudit" app="{{ app }}" hint-size="100%,600px"></dc-import></sc-if>
+      <sc-if value="{{ r.settings }}" hint-placeholder-val="{{ false }}"><dc-import name="PageSettings" app="{{ app }}" hint-size="100%,400px"></dc-import></sc-if>
+      <sc-if value="{{ r.notFound }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:20px 24px;">
+          <h1 style="font-size:18px; font-weight:600; margin:0;">Page not found</h1>
+          <p style="margin:4px 0 0; color:#5B6272;">There is no page at this address. <a href="#/">Go to the dashboard</a>.</p>
+        </div>
+      </sc-if>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { ready: false, db: null, route: this.parse(), q: '', searchOpen: false, v: 0 };
+
+  parse() {
+    const h = (location.hash || '').replace(/^#\/?/, '');
+    const [path, qs] = h.split('?');
+    const parts = path.split('/').filter(Boolean).map(decodeURIComponent);
+    const query = Object.fromEntries(new URLSearchParams(qs || ''));
+    return { parts, query, key: h };
+  }
+
+  componentDidMount() {
+    this._onHash = () => { this.setState({ route: this.parse(), searchOpen: false }); window.scrollTo(0, 0); };
+    window.addEventListener('hashchange', this._onHash);
+    const init = () => {
+      if (window.LLA_MOCK && window.LLA) this.setState({ ready: true, db: JSON.parse(JSON.stringify(window.LLA_MOCK)) });
+      else this._t = setTimeout(init, 40);
+    };
+    init();
+  }
+  componentWillUnmount() { window.removeEventListener('hashchange', this._onHash); clearTimeout(this._t); }
+
+  nav = path => { location.hash = '#' + path; };
+  mut = fn => { fn(this.state.db); this.setState(s => ({ db: Object.assign({}, s.db), v: s.v + 1 })); };
+
+  addAudit = (stage, outcome, reason, actor, refs, details) => {
+    const db = this.state.db;
+    const id = Math.max(...db.audit.map(a => a.audit_id)) + 1;
+    db.audit.push({ audit_id: id, event_time: window.LLA.now(), stage, outcome, reason, actor, upload_id: refs.upload || null, alarm_id: refs.alarm || null, incident_id: refs.incident || null, ticket_id: refs.ticket || null, details: details || null });
+  };
+
+  // ---------- actions (swap for API calls later) ----------
+  decide = (ticketId, outcome, reason) => {
+    const db = this.state.db;
+    const t = db.tickets.find(x => x.ticket_id === ticketId);
+    if (!t || t.approval_status !== 'PENDING') return;
+    this.mut(() => {
+      const now = window.LLA.now();
+      t.approval_status = outcome;
+      t.ticket_status = outcome === 'APPROVED' ? 'OPEN' : 'CLOSED';
+      t.decided_by = db.analyst;
+      t.decided_at = now;
+      const inc = db.incidents.find(i => i.incident_id === t.incident_id);
+      const up = inc ? (db.alarms.find(a => a.alarm_id === (db.incidentAlarms.find(x => x.incident_id === inc.incident_id) || {}).alarm_id) || {}).source_upload_id : null;
+      this.addAudit('TICKETING', outcome, reason || (outcome === 'APPROVED' ? `Approved by analyst` : 'Rejected by analyst'), db.analyst, { ticket: t.ticket_id, incident: t.incident_id, upload: up }, { ticket_number: t.ticket_number, severity: t.severity, approval_status: outcome, decided_by: db.analyst, decided_at: now, reason: reason || null });
+    });
+  };
+
+  createUpload = (fileName, rows) => {
+    const db = this.state.db;
+    const id = Math.max(...db.uploads.map(u => u.upload_id)) + 1;
+    const now = window.LLA.now();
+    let rawId = Math.max(...db.raw.map(r => r.raw_id)) + 1;
+    this.mut(() => {
+      db.uploads.push({ upload_id: id, file_name: fileName, file_hash: null, uploaded_by: db.analyst, uploaded_at: now, status: 'UPLOADED', rows_total: rows.length, rows_loaded: 0, rows_updated: 0, rows_skipped: 0, rows_rejected: 0, completed_at: null, run: { steps: this.freshSteps(id) } });
+      rows.forEach((d, i) => db.raw.push({ raw_id: rawId++, upload_id: id, row_number: i + 1, raw_data: d, load_outcome: 'PENDING', outcome_reason: null, alarm_id: null, created_at: now }));
+    });
+    return id;
+  };
+  freshSteps = id => [
+    { state: 'Waiting', message: 'Normalize upload ' + id, counts: null },
+    { state: 'Waiting', message: 'Run deduplication and suppression', counts: null },
+    { state: 'Waiting', message: 'Run correlation', counts: null },
+    { state: 'Waiting', message: 'Run ticketing', counts: null }
+  ];
+
+  runUpload = id => {
+    const db = this.state.db;
+    const up = db.uploads.find(u => u.upload_id === id);
+    if (!up || up.run.steps.some(s => s.state === 'Running')) return;
+    const L = window.LLA;
+    const ctx = { addAudit: this.addAudit };
+    this.mut(() => { up.status = 'UPLOADED'; up.completed_at = null; up.run = { steps: this.freshSteps(id) }; });
+    let before = 0;
+    const names = ['normalization', 'dedup', 'correlation', 'ticketing'];
+    const step = i => {
+      this.mut(() => { up.run.steps[i].state = 'Running'; up.run.steps[i].started_at = L.now(); up.run.steps[i].finished_at = null; });
+      setTimeout(() => {
+        this.mut(() => {
+          if (i === 2) before = Math.max(0, ...db.incidents.map(x => x.incident_id));
+          const newIds = db.incidents.filter(x => x.incident_id > before).map(x => x.incident_id);
+          const res = L.agents[names[i]](db, id, ctx, newIds);
+          const s = up.run.steps[i];
+          s.finished_at = L.now();
+          if (!res.ok) {
+            s.state = 'Failed'; s.error = res.error; up.status = 'FAILED';
+            this.addAudit('NORMALIZATION', 'REJECTED', res.error, 'agent:normalization', { upload: id }, { error: res.error });
+            return;
+          }
+          s.state = 'Done'; s.counts = res.counts;
+          if (i === 3) up.completed_at = L.now();
+        });
+        if (up.run.steps[i].state === 'Done' && i < 3) setTimeout(() => step(i + 1), 400);
+      }, 1800 + Math.round(Math.random() * 1400));
+    };
+    setTimeout(() => step(0), 300);
+  };
+
+  saveWindow = w => this.mut(db => {
+    if (w.window_id) Object.assign(db.maintenance.find(x => x.window_id === w.window_id), w);
+    else db.maintenance.push(Object.assign({}, w, { window_id: Math.max(0, ...db.maintenance.map(x => x.window_id)) + 1, created_at: window.LLA.now() }));
+  });
+  saveConfig = (key, value) => this.mut(db => {
+    const c = db.config.find(x => x.config_key === key);
+    c.config_value = String(value); c.updated_at = window.LLA.now();
+  });
+
+  renderVals() {
+    const { ready, db, route, q, searchOpen } = this.state;
+    const [p0, p1] = route.parts;
+    const r = {
+      dashboard: ready && !p0,
+      uploads: ready && p0 === 'uploads' && !p1,
+      uploadNew: ready && p0 === 'uploads' && p1 === 'new',
+      uploadDetail: ready && p0 === 'uploads' && !!p1 && p1 !== 'new',
+      agentPipeline: ready && p0 === 'agent-pipeline',
+      alarms: ready && p0 === 'alarms',
+      incidents: ready && p0 === 'incidents' && !p1,
+      incidentDetail: ready && p0 === 'incidents' && !!p1,
+      tickets: ready && p0 === 'tickets' && !p1,
+      ticketDetail: ready && (p0 === 'tickets' || p0 === 'approvals') && !!p1,
+      approvals: ready && p0 === 'approvals' && !p1,
+      audit: ready && p0 === 'audit',
+      settings: ready && p0 === 'settings'
+    };
+    r.notFound = ready && !Object.values(r).some(Boolean);
+    const pending = db ? db.tickets.filter(t => t.approval_status === 'PENDING').length : 0;
+    const section = p0 || '';
+    const items = [['', 'Dashboard'], ['uploads', 'Uploads'], ['agent-pipeline', 'Agent pipeline'], ['alarms', 'Alarms'], ['incidents', 'Incidents'], ['tickets', 'Tickets'], ['approvals', 'Approval queue'], ['audit', 'Audit trail'], ['settings', 'Settings']];
+    const navItems = items.map(([k, label]) => {
+      const active = section === k;
+      return {
+        href: '#/' + k, label, current: active ? 'page' : undefined,
+        showBadge: k === 'approvals' && pending > 0, badge: pending, badgeLabel: pending + ' pending',
+        style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '7px 10px', borderRadius: 4, fontSize: 13, textDecoration: 'none', color: active ? '#93330F' : '#1F2430', background: active ? '#FCEDE6' : 'transparent', fontWeight: active ? 600 : 400 }
+      };
+    });
+
+    let results = [];
+    const qq = q.trim().toLowerCase();
+    if (db && qq.length >= 2) {
+      const L = window.LLA;
+      L.uniq(db.alarms.map(a => a.host)).filter(h => h.toLowerCase().includes(qq)).forEach(h => results.push({ label: h, kind: 'Host, show alarms', path: '/alarms?host=' + encodeURIComponent(h) }));
+      db.tickets.filter(t => t.ticket_number.toLowerCase().includes(qq)).forEach(t => results.push({ label: t.ticket_number, kind: 'Ticket, ' + t.host, path: '/tickets/' + t.ticket_id }));
+      db.incidents.filter(i => i.incident_code.toLowerCase().includes(qq)).forEach(i => results.push({ label: i.incident_code, kind: 'Incident, ' + i.host, path: '/incidents/' + i.incident_id }));
+      results = results.slice(0, 10).map(x => Object.assign(x, {
+        go: e => { if (e) e.preventDefault(); this.setState({ q: '', searchOpen: false }); this.nav(x.path); },
+        key: e => { if (e.key === 'Enter') { e.preventDefault(); this.setState({ q: '', searchOpen: false }); this.nav(x.path); } }
+      }));
+    }
+
+    const app = {
+      db, route, v: this.state.v, nav: this.nav, analyst: db ? db.analyst : '', pendingCount: pending,
+      actions: {
+        approve: id => this.decide(id, 'APPROVED'),
+        reject: (id, reason) => this.decide(id, 'REJECTED', reason),
+        createUpload: this.createUpload, runUpload: this.runUpload,
+        saveWindow: this.saveWindow, saveConfig: this.saveConfig
+      }
+    };
+
+    return {
+      r, app, navItems, notReady: !ready, analyst: db ? db.analyst : 'Analyst Name',
+      q, results, showResults: searchOpen && qq.length >= 2, noResults: results.length === 0,
+      onSearch: e => this.setState({ q: e.target.value, searchOpen: true }),
+      openSearch: () => this.setState({ searchOpen: true }),
+      closeSearchSoon: () => setTimeout(() => this.setState({ searchOpen: false }), 150),
+      onSearchKey: e => {
+        if (e.key === 'Escape') this.setState({ searchOpen: false });
+        if (e.key === 'Enter' && results[0]) results[0].go(e);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

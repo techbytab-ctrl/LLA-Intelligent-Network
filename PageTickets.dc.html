@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div data-screen-label="Tickets" style="padding:20px 24px 40px; display:flex; flex-direction:column; gap:14px;">
+  <div>
+    <h1 style="font-size:18px; font-weight:600; margin:0; line-height:1.3;">Tickets</h1>
+    <p style="margin:2px 0 0; color:#5B6272;">One ticket per incident. Severity and approval come from the severity mapping.</p>
+  </div>
+  <div role="tablist" aria-label="Ticket approval status" style="display:flex; border-bottom:1px solid #D9DCE3;">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+      <button type="button" role="tab" aria-selected="{{ t.selected }}" onClick="{{ t.go }}" style="{{ t.style }}">{{ t.label }}</button>
+    </sc-for>
+  </div>
+  <div style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px; overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+      <thead><tr>
+        <sc-for list="{{ cols }}" as="c" hint-placeholder-count="14">
+          <th aria-sort="{{ c.ariaSort }}" style="{{ c.thStyle }}"><button type="button" onClick="{{ c.onSort }}" style="border:0; background:transparent; padding:0; font:inherit; font-weight:600; color:inherit; cursor:pointer; display:inline-flex; gap:4px; align-items:center; white-space:nowrap;">{{ c.label }}<span aria-hidden="true" style="color:#8A90A0; font-size:10px;">{{ c.ind }}</span></button></th>
+        </sc-for>
+      </tr></thead>
+      <tbody>
+        <sc-for list="{{ rows }}" as="t" hint-placeholder-count="7">
+          <tr onClick="{{ t.open }}" style="cursor:pointer;" style-hover="background:#F9FAFB;">
+            <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap;"><a href="{{ t.href }}">{{ t.ticket_number }}</a></td>
+            <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap; color:#5B6272;">{{ t.extRef }}</td>
+            <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap;">{{ t.host }}</td>
+            <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;"><span style="{{ t.sevTag }}">{{ t.severity }}</span></td>
+            <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; min-width:260px;">{{ t.summary }}</td>
+            <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;">{{ t.component }}</td>
+            <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;">{{ t.alert_type }}</td>
+            <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; text-align:right; font-variant-numeric:tabular-nums;">{{ t.alarm_count }}</td>
+            <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap; font-variant-numeric:tabular-nums;">{{ t.start }}</td>
+            <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;">{{ t.ticket_status }}</td>
+            <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;"><span style="{{ t.apTag }}">{{ t.approval_status }}</span></td>
+            <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap;">{{ t.decidedBy }}</td>
+            <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap; font-variant-numeric:tabular-nums;">{{ t.decidedAt }}</td>
+          </tr>
+        </sc-for>
+      </tbody>
+    </table>
+    <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><p style="margin:0; padding:14px; color:#5B6272;">No tickets in this view.</p></sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { tab: '', sort: { key: 'start_time', dir: 'desc' } };
+  renderVals() {
+    const app = this.props.app; const db = app.db; const L = window.LLA;
+    const { tab, sort } = this.state;
+    const n = s => db.tickets.filter(t => t.approval_status === s).length;
+    const tabs = [['', 'All', db.tickets.length], ['PENDING', 'Pending approval', n('PENDING')], ['APPROVED', 'Approved', n('APPROVED')], ['REJECTED', 'Rejected', n('REJECTED')]].map(([k, label, c]) => {
+      const sel = tab === k;
+      return { label: `${label} (${c})`, selected: sel ? 'true' : 'false', go: () => this.setState({ tab: k }), style: { height: 34, padding: '0 14px', border: 0, borderBottom: '2px solid ' + (sel ? '#C4441A' : 'transparent'), marginBottom: -1, background: 'transparent', color: sel ? '#1F2430' : '#4A5160', fontWeight: sel ? 600 : 500, cursor: 'pointer' } };
+    });
+    const list = L.sortBy(db.tickets.filter(t => !tab || t.approval_status === tab), sort.key, sort.dir);
+    const rows = list.map(t => Object.assign({}, t, {
+      extRef: t.external_ticket_ref || 'Not set', sevTag: L.tag(t.severity), apTag: L.tag(t.approval_status), start: L.fmtTime(t.start_time),
+      decidedBy: t.decided_by ? L.decidedBy(t.decided_by) : 'Not decided', decidedAt: t.decided_at ? L.fmtTime(t.decided_at) : 'Not decided',
+      href: '#/tickets/' + t.ticket_id, open: () => app.nav('/tickets/' + t.ticket_id)
+    }));
+    const defs = [['ticket_number', 'Ticket number'], ['external_ticket_ref', 'External ref'], ['host', 'Host'], ['severity', 'Severity'], ['summary', 'Summary'], ['component', 'Component'], ['alert_type', 'Alert type'], ['alarm_count', 'Alarms', 'right'], ['start_time', 'Start time'], ['ticket_status', 'Ticket status'], ['approval_status', 'Approval'], ['decided_by', 'Decided by'], ['decided_at', 'Decided at']];
+    const cols = defs.map(([key, label, align]) => {
+      const on = sort.key === key;
+      return { label, ind: on ? (sort.dir === 'asc' ? '▲' : '▼') : '', ariaSort: on ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none',
+        thStyle: { textAlign: align || 'left', fontWeight: 600, color: '#4A5160', background: '#F7F8FA', padding: '7px 10px', borderBottom: '1px solid #D9DCE3', fontSize: 12, whiteSpace: 'nowrap' },
+        onSort: () => this.setState(s => ({ sort: { key, dir: s.sort.key === key && s.sort.dir === 'asc' ? 'desc' : 'asc' } })) };
+    });
+    return { tabs, cols, rows, empty: rows.length === 0 };
+  }
+}
+</script>
+</body>
+</html>

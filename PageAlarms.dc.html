@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div data-screen-label="Alarms" style="padding:20px 24px 40px; display:flex; flex-direction:column; gap:14px;">
+  <div>
+    <h1 style="font-size:18px; font-weight:600; margin:0; line-height:1.3;">Alarms</h1>
+    <p style="margin:2px 0 0; color:#5B6272;">Every normalized alarm, including suppressed ones with their reason. Click a row for full details.</p>
+  </div>
+
+  <div style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px; padding:10px 12px; display:flex; flex-direction:column; gap:10px;">
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px 10px;">
+      <label style="display:flex; flex-direction:column; gap:3px; font-size:11.5px; color:#4A5160; grid-column:span 2;">
+        <span>Search problem</span>
+        <input type="search" value="{{ text }}" onChange="{{ onText }}" placeholder="For example: temperature" style="height:30px; border:1px solid #C9CDD6; border-radius:4px; padding:0 8px; background:#FFFFFF;">
+      </label>
+      <sc-for list="{{ filters }}" as="f" hint-placeholder-count="7">
+        <label style="display:flex; flex-direction:column; gap:3px; font-size:11.5px; color:#4A5160;">
+          <span>{{ f.label }}</span>
+          <select value="{{ f.value }}" onChange="{{ f.onChange }}" style="height:30px; border:1px solid #C9CDD6; border-radius:4px; padding:0 6px; background:#FFFFFF;">
+            <sc-for list="{{ f.options }}" as="o" hint-placeholder-count="3"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+          </select>
+        </label>
+      </sc-for>
+      <label style="display:flex; flex-direction:column; gap:3px; font-size:11.5px; color:#4A5160;">
+        <span>Alarm time from</span>
+        <input type="date" value="{{ from }}" onChange="{{ onFrom }}" style="height:30px; border:1px solid #C9CDD6; border-radius:4px; padding:0 6px; background:#FFFFFF;">
+      </label>
+      <label style="display:flex; flex-direction:column; gap:3px; font-size:11.5px; color:#4A5160;">
+        <span>Alarm time to</span>
+        <input type="date" value="{{ to }}" onChange="{{ onTo }}" style="height:30px; border:1px solid #C9CDD6; border-radius:4px; padding:0 6px; background:#FFFFFF;">
+      </label>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+      <span style="font-size:12px; color:#4A5160;">{{ countText }}</span>
+      <div style="display:flex; gap:8px;">
+        <button type="button" onClick="{{ reset }}" style="height:28px; padding:0 10px; background:#FFFFFF; color:#1F2430; border:1px solid #C9CDD6; border-radius:4px; font-size:12px; font-weight:500; cursor:pointer;" style-hover="background:#F5F6F8;">Clear filters</button>
+        <button type="button" onClick="{{ exportCsv }}" style="height:28px; padding:0 10px; background:#FFFFFF; color:#1F2430; border:1px solid #C9CDD6; border-radius:4px; font-size:12px; font-weight:500; cursor:pointer;" style-hover="background:#F5F6F8;">Export view to CSV</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px;">
+    <div style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+        <thead><tr>
+          <sc-for list="{{ cols }}" as="c" hint-placeholder-count="13">
+            <th aria-sort="{{ c.ariaSort }}" style="{{ c.thStyle }}">
+              <button type="button" onClick="{{ c.onSort }}" style="border:0; background:transparent; padding:0; font:inherit; font-weight:600; color:inherit; cursor:pointer; display:inline-flex; gap:4px; align-items:center; white-space:nowrap;">{{ c.label }}<span aria-hidden="true" style="color:#8A90A0; font-size:10px;">{{ c.ind }}</span></button>
+            </th>
+          </sc-for>
+        </tr></thead>
+        <tbody>
+          <sc-for list="{{ rows }}" as="a" hint-placeholder-count="10">
+            <tr onClick="{{ a.open }}" style="{{ a.trStyle }}" style-hover="background:#F9FAFB;">
+              <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap;"><button type="button" onClick="{{ a.open }}" style="border:0; background:transparent; padding:0; color:#B03C14; cursor:pointer; font-size:12.5px;" style-hover="text-decoration:underline;">{{ a.alarm_id }}</button></td>
+              <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap;">{{ a.host }}</td>
+              <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2;"><span style="{{ a.sevTag }}">{{ a.severity }}</span></td>
+              <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2; min-width:240px;">{{ a.problem }}</td>
+              <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap; font-variant-numeric:tabular-nums;">{{ a.time }}</td>
+              <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap; font-variant-numeric:tabular-nums;">{{ a.recovery }}</td>
+              <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2;">{{ a.status }}</td>
+              <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2; text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums;">{{ a.duration }}</td>
+              <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2;">{{ a.ackText }}</td>
+              <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2;">{{ a.component }}</td>
+              <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2;">{{ a.alert_type }}</td>
+              <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2;">{{ a.vendor }}</td>
+              <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2;"><span style="{{ a.psTag }}">{{ a.pipeline_status }}</span></td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+    <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+      <p style="margin:0; padding:14px; color:#5B6272;">No alarms match these filters.</p>
+    </sc-if>
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 12px; border-top:1px solid #ECEEF2; flex-wrap:wrap; font-size:12px; color:#4A5160;">
+      <label style="display:flex; align-items:center; gap:6px;">
+        <span>Rows per page</span>
+        <select value="{{ pageSize }}" onChange="{{ onPageSize }}" style="height:26px; border:1px solid #C9CDD6; border-radius:4px; padding:0 4px; background:#FFFFFF; font-size:12px;">
+          <option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option>
+        </select>
+      </label>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span>{{ pageText }}</span>
+        <button type="button" onClick="{{ prev }}" disabled="{{ noPrev }}" aria-label="Previous page" style="height:26px; padding:0 10px; background:#FFFFFF; color:#1F2430; border:1px solid #C9CDD6; border-radius:4px; font-size:12px; cursor:pointer;" style-hover="background:#F5F6F8;">Previous</button>
+        <button type="button" onClick="{{ next }}" disabled="{{ noNext }}" aria-label="Next page" style="height:26px; padding:0 10px; background:#FFFFFF; color:#1F2430; border:1px solid #C9CDD6; border-radius:4px; font-size:12px; cursor:pointer;" style-hover="background:#F5F6F8;">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ close }}" style="position:fixed; inset:0; background:rgba(31,36,48,0.18); z-index:40;"></div>
+    <aside role="dialog" aria-modal="true" aria-label="{{ panelTitle }}" onKeyDown="{{ panelKey }}" style="position:fixed; top:0; right:0; bottom:0; width:min(480px, 92vw); background:#FFFFFF; border-left:1px solid #D9DCE3; box-shadow:-4px 0 16px rgba(20,24,40,0.10); z-index:41; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:12px 16px; border-bottom:1px solid #ECEEF2;">
+        <div style="min-width:0;">
+          <div style="font-size:15px; font-weight:600; display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><span>Alarm {{ p.alarm_id }}</span><span style="{{ p.sevTag }}">{{ p.severity }}</span><span style="{{ p.psTag }}">{{ p.pipeline_status }}</span></div>
+          <div style="font-size:12.5px; color:#4A5160; margin-top:2px;">{{ p.problem }}</div>
+        </div>
+        <button type="button" ref="{{ closeRef }}" onClick="{{ close }}" style="height:28px; padding:0 10px; background:#FFFFFF; color:#1F2430; border:1px solid #C9CDD6; border-radius:4px; font-size:12px; cursor:pointer; flex:none;" style-hover="background:#F5F6F8;">Close</button>
+      </div>
+      <div style="overflow-y:auto; padding:12px 16px 24px; display:flex; flex-direction:column; gap:16px;">
+        <sc-if value="{{ p.hasSuppression }}" hint-placeholder-val="{{ false }}">
+          <div style="border:1px solid #D9DCE3; background:#F5F6F8; border-radius:4px; padding:8px 10px; display:flex; flex-direction:column; gap:3px;">
+            <span style="font-size:11.5px; color:#4A5160; font-weight:600;">Suppression reason</span>
+            <span>{{ p.suppression_reason }}</span>
+            <sc-if value="{{ p.survivor_alarm_id }}" hint-placeholder-val="{{ false }}">
+              <span style="font-size:12.5px;">Survivor alarm: <button type="button" onClick="{{ p.openSurvivor }}" style="border:0; background:transparent; padding:0; color:#B03C14; cursor:pointer; font-size:12.5px;" style-hover="text-decoration:underline;">{{ p.survivor_alarm_id }}</button></span>
+            </sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{ p.hasIncident }}" hint-placeholder-val="{{ false }}">
+          <div style="border:1px solid #D9DCE3; border-radius:4px; padding:8px 10px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:11.5px; color:#4A5160; font-weight:600;">Incident</span>
+            <a href="{{ p.incHref }}">{{ p.incCode }}</a>
+            <span style="{{ p.roleTag }}">{{ p.role }}</span>
+            <sc-if value="{{ p.ticketNumber }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px; color:#4A5160;">Ticket <a href="{{ p.ticketHref }}">{{ p.ticketNumber }}</a></span></sc-if>
+          </div>
+        </sc-if>
+        <section>
+          <h3 style="font-size:12.5px; font-weight:600; margin:0 0 6px;">Fields</h3>
+          <dl style="margin:0; display:grid; grid-template-columns:140px minmax(0,1fr); border:1px solid #ECEEF2; border-radius:4px;">
+            <sc-for list="{{ p.fields }}" as="fd" hint-placeholder-count="12">
+              <dt style="padding:5px 10px; border-bottom:1px solid #ECEEF2; background:#F9FAFB; color:#4A5160; font-size:12px;">{{ fd.k }}</dt>
+              <dd style="{{ fd.style }}">{{ fd.v }}</dd>
+            </sc-for>
+          </dl>
+        </section>
+        <section>
+          <h3 style="font-size:12.5px; font-weight:600; margin:0 0 6px;">Raw CSV row</h3>
+          <sc-for list="{{ p.raws }}" as="rw" hint-placeholder-count="1">
+            <div style="margin-bottom:8px;">
+              <div style="font-size:12px; color:#4A5160; margin-bottom:3px;"><a href="{{ rw.href }}">Upload {{ rw.upload_id }}</a>, row {{ rw.row_number }} · {{ rw.reason }}</div>
+              <pre style="margin:0; padding:8px 10px; background:#F7F8FA; border:1px solid #ECEEF2; border-radius:4px; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:11.5px; line-height:1.5; white-space:pre-wrap; word-break:break-word;">{{ rw.json }}</pre>
+            </div>
+          </sc-for>
+        </section>
+        <section>
+          <h3 style="font-size:12.5px; font-weight:600; margin:0 0 6px;">Audit history</h3>
+          <dc-import name="AuditEvents" app="{{ app }}" events="{{ p.audit }}" hint-size="100%,120px"></dc-import>
+        </section>
+      </div>
+    </aside>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  blank = () => ({ text: '', host: '', severity: '', status: '', component: '', alert_type: '', vendor: '', upload: '', from: '', to: '' });
+  fromQuery = q => Object.assign(this.blank(), { host: q.host || '', status: q.status || '', upload: q.upload || '', severity: q.severity || '' });
+  state = { f: this.fromQuery(this.props.app.route.query), sort: { key: 'alarm_time', dir: 'desc' }, page: 1, pageSize: 25, sel: this.props.app.route.query.alarm ? Number(this.props.app.route.query.alarm) : null };
+  closeRef = React.createRef();
+
+  componentDidUpdate(prev) {
+    const a = prev.app.route.key, b = this.props.app.route.key;
+    if (a !== b) {
+      const q = this.props.app.route.query;
+      const next = { sel: q.alarm ? Number(q.alarm) : null };
+      if (q.host || q.status || q.upload || q.severity) Object.assign(next, { f: this.fromQuery(q), page: 1 });
+      this.setState(next);
+    }
+    if (this.state.sel && this._lastSel !== this.state.sel && this.closeRef.current) { this.closeRef.current.focus(); }
+    this._lastSel = this.state.sel;
+  }
+  componentDidMount() { if (this.state.sel && this.closeRef.current) this.closeRef.current.focus(); this._lastSel = this.state.sel; }
+
+  setF = (k, v) => this.setState(s => ({ f: Object.assign({}, s.f, { [k]: v }), page: 1 }));
+
+  filtered() {
+    const db = this.props.app.db; const f = this.state.f; const L = window.LLA;
+    const t = f.text.trim().toLowerCase();
+    return db.alarms.filter(a =>
+      (!t || a.problem.toLowerCase().includes(t)) &&
+      (!f.host || a.host === f.host) && (!f.severity || a.severity === f.severity) &&
+      (!f.status || (f.status === 'SUPPRESSED' ? /^SUPPRESSED/.test(a.pipeline_status) : a.pipeline_status === f.status)) &&
+      (!f.component || a.component === f.component) && (!f.alert_type || a.alert_type === f.alert_type) &&
+      (!f.vendor || a.vendor === f.vendor) && (!f.upload || String(a.source_upload_id) === f.upload) &&
+      L.inRange(a.alarm_time, f.from, f.to));
+  }
+
+  renderVals() {
+    const app = this.props.app; const db = app.db; const L = window.LLA;
+    const { f, sort, page, pageSize, sel } = this.state;
+    const rowsAll = L.sortBy(this.filtered(), sort.key, sort.dir);
+    const pages = Math.max(1, Math.ceil(rowsAll.length / pageSize));
+    const pg = Math.min(page, pages);
+    const slice = rowsAll.slice((pg - 1) * pageSize, pg * pageSize);
+    const open = id => this.setState({ sel: id });
+
+    const opt = (label, key, values, extra) => ({ label, value: f[key], options: L.opts(values).concat(extra || []), onChange: e => this.setF(key, e.target.value) });
+    const filters = [
+      opt('Host', 'host', L.uniq(db.alarms.map(a => a.host))),
+      opt('Severity', 'severity', db.severity.map(s => s.severity_name)),
+      Object.assign(opt('Pipeline status', 'status', ['NEW', 'SUPPRESSED_MAINTENANCE', 'SUPPRESSED_DEDUP', 'SUPPRESSED_DEBOUNCE', 'SURVIVED', 'CORRELATED']), {}),
+      opt('Component', 'component', L.uniq(db.alarms.map(a => a.component))),
+      opt('Alert type', 'alert_type', L.uniq(db.alarms.map(a => a.alert_type))),
+      opt('Vendor', 'vendor', L.uniq(db.alarms.map(a => a.vendor))),
+      { label: 'Upload', value: f.upload, options: L.opts([]).concat(db.uploads.map(u => ({ value: String(u.upload_id), label: 'Upload ' + u.upload_id }))), onChange: e => this.setF('upload', e.target.value) }
+    ];
+    filters[2].options.splice(1, 0, { value: 'SUPPRESSED', label: 'All suppressed' });
+
+    const colDefs = [['alarm_id', 'Alarm ID'], ['host', 'Host'], ['severity', 'Severity'], ['problem', 'Problem'], ['alarm_time', 'Alarm time'], ['recovery_time', 'Recovery time'], ['status', 'Status'], ['duration_minutes', 'Duration (min)', 'right'], ['ack', 'Ack'], ['component', 'Component'], ['alert_type', 'Alert type'], ['vendor', 'Vendor'], ['pipeline_status', 'Pipeline status']];
+    const cols = colDefs.map(([key, label, align]) => {
+      const on = sort.key === key;
+      return {
+        label, ind: on ? (sort.dir === 'asc' ? '▲' : '▼') : '', ariaSort: on ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none',
+        thStyle: { textAlign: align || 'left', fontWeight: 600, color: '#4A5160', background: '#F7F8FA', padding: '7px 10px', borderBottom: '1px solid #D9DCE3', fontSize: 12, whiteSpace: 'nowrap' },
+        onSort: () => this.setState(s => ({ sort: { key, dir: s.sort.key === key && s.sort.dir === 'asc' ? 'desc' : 'asc' } }))
+      };
+    });
+    const rows = slice.map(a => Object.assign({}, a, {
+      sevTag: L.tag(a.severity), psTag: L.tag(a.pipeline_status), time: L.fmtTime(a.alarm_time),
+      recovery: a.recovery_time ? L.fmtTime(a.recovery_time) : 'None', duration: L.fmtDuration(a), ackText: L.yesNo(a.ack),
+      component: L.np(a.component), alert_type: L.np(a.alert_type), vendor: L.np(a.vendor),
+      trStyle: { cursor: 'pointer', background: a.alarm_id === sel ? '#FCF4F0' : undefined },
+      open: e => { if (e) e.stopPropagation(); open(a.alarm_id); }
+    }));
+
+    let p = {}; const a = sel && db.alarms.find(x => x.alarm_id === sel);
+    if (a) {
+      const link = db.incidentAlarms.find(x => x.alarm_id === a.alarm_id);
+      const inc = link && db.incidents.find(i => i.incident_id === link.incident_id);
+      const tk = inc && db.tickets.find(t => t.incident_id === inc.incident_id);
+      const up = db.uploads.find(u => u.upload_id === a.source_upload_id);
+      const fv = (k, v, opts) => ({ k, v, style: { margin: 0, padding: '5px 10px', borderBottom: '1px solid #ECEEF2', fontSize: 12.5, color: (opts && opts.muted) ? '#5B6272' : '#1F2430', wordBreak: 'break-word' } });
+      const npv = (k, v) => fv(k, L.np(v), { muted: v == null || v === '' });
+      p = Object.assign({}, a, {
+        sevTag: L.tag(a.severity), psTag: L.tag(a.pipeline_status),
+        hasSuppression: !!a.suppression_reason, openSurvivor: () => open(a.survivor_alarm_id),
+        hasIncident: !!inc, incCode: inc && inc.incident_code, incHref: inc ? '#/incidents/' + inc.incident_id : '', role: link && link.alarm_role, roleTag: L.tag(link && link.alarm_role),
+        ticketNumber: tk ? tk.ticket_number : null, ticketHref: tk ? '#/tickets/' + tk.ticket_id : '',
+        fields: [
+          fv('Host', a.host), fv('Severity', a.severity), fv('Problem', a.problem),
+          fv('Alarm time', L.fmtTime(a.alarm_time)), fv('Recovery time', a.recovery_time ? L.fmtTime(a.recovery_time) : 'None, still active', { muted: !a.recovery_time }),
+          fv('Status', a.status), fv('Duration (min)', L.fmtDuration(a)), fv('Ack', L.yesNo(a.ack)),
+          npv('Class', a.alarm_class), npv('Alert type', a.alert_type), npv('Component', a.component),
+          npv('IP address', a.ip_address), npv('Interface', a.interface), npv('Alias', a.alias), npv('Vendor', a.vendor),
+          fv('Pipeline status', a.pipeline_status), fv('Source upload', up ? `Upload ${up.upload_id} (${up.file_name})` : String(a.source_upload_id)),
+          fv('Created at', L.fmtTime(a.created_at)), fv('Updated at', L.fmtTime(a.updated_at))
+        ],
+        raws: db.raw.filter(r => r.alarm_id === a.alarm_id).map(r => ({ upload_id: r.upload_id, row_number: r.row_number, reason: r.outcome_reason, href: '#/uploads/' + r.upload_id, json: L.json(r.raw_data) })),
+        audit: db.audit.filter(e => e.alarm_id === a.alarm_id)
+      });
+    }
+    const close = () => this.setState({ sel: null });
+    const from = rowsAll.length ? (pg - 1) * pageSize + 1 : 0;
+
+    return {
+      app, text: f.text, onText: e => this.setF('text', e.target.value), filters,
+      from: f.from, to: f.to, onFrom: e => this.setF('from', e.target.value), onTo: e => this.setF('to', e.target.value),
+      countText: `${rowsAll.length} of ${db.alarms.length} alarms match`,
+      reset: () => this.setState({ f: this.blank(), page: 1 }),
+      exportCsv: () => L.downloadCSV('alarms_filtered.csv', ['alarm_id', 'source_upload_id', 'host', 'severity', 'problem', 'alarm_time', 'recovery_time', 'status', 'duration_minutes', 'ack', 'alarm_class', 'alert_type', 'component', 'ip_address', 'interface', 'alias', 'vendor', 'pipeline_status', 'suppression_reason', 'survivor_alarm_id'],
+        rowsAll.map(a => [a.alarm_id, a.source_upload_id, a.host, a.severity, a.problem, L.fmtTime(a.alarm_time), L.fmtTime(a.recovery_time), a.status, a.duration_minutes, a.ack ? 'Yes' : 'No', a.alarm_class, a.alert_type, a.component, a.ip_address, a.interface, a.alias, a.vendor, a.pipeline_status, a.suppression_reason, a.survivor_alarm_id])),
+      cols, rows, empty: rowsAll.length === 0,
+      pageSize: String(pageSize), onPageSize: e => this.setState({ pageSize: Number(e.target.value), page: 1 }),
+      pageText: `${from}–${Math.min(pg * pageSize, rowsAll.length)} of ${rowsAll.length} · page ${pg} of ${pages}`,
+      prev: () => this.setState({ page: Math.max(1, pg - 1) }), next: () => this.setState({ page: Math.min(pages, pg + 1) }),
+      noPrev: pg <= 1, noNext: pg >= pages,
+      panelOpen: !!a, p, panelTitle: a ? 'Alarm ' + a.alarm_id : '', close, closeRef: this.closeRef,
+      panelKey: e => { if (e.key === 'Escape') close(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

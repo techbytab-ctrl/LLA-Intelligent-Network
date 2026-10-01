@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="border:1px solid #ECEEF2; border-radius:4px; background:#FFFFFF;">
+  <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+    <p style="margin:0; padding:10px 12px; color:#5B6272; font-size:12.5px;">No audit events recorded.</p>
+  </sc-if>
+  <ol style="list-style:none; margin:0; padding:0;">
+    <sc-for list="{{ items }}" as="e" hint-placeholder-count="3">
+      <li style="padding:8px 12px; border-bottom:1px solid #ECEEF2; display:flex; flex-direction:column; gap:3px; font-size:12.5px;">
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <span style="color:#4A5160; font-variant-numeric:tabular-nums; white-space:nowrap;">{{ e.time }}</span>
+          <span style="font-size:11.5px; color:#4A5160; font-weight:600;">{{ e.stage }}</span>
+          <span style="{{ e.tag }}">{{ e.outcome }}</span>
+          <span style="font-size:11.5px; color:#5B6272;">{{ e.actor }}</span>
+        </div>
+        <div style="text-wrap:pretty;">{{ e.reason }}</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; font-size:12px;">
+          <sc-for list="{{ e.links }}" as="l" hint-placeholder-count="2"><a href="{{ l.href }}">{{ l.label }}</a></sc-for>
+          <sc-if value="{{ e.hasDetails }}" hint-placeholder-val="{{ false }}">
+            <button type="button" aria-expanded="{{ e.open }}" onClick="{{ e.toggle }}" style="border:0; background:transparent; padding:0; color:#B03C14; cursor:pointer; font-size:12px;" style-hover="text-decoration:underline;">{{ e.toggleText }}</button>
+          </sc-if>
+        </div>
+        <sc-if value="{{ e.open }}" hint-placeholder-val="{{ false }}">
+          <pre style="margin:4px 0 0; padding:8px 10px; background:#F7F8FA; border:1px solid #ECEEF2; border-radius:4px; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:11.5px; line-height:1.5; white-space:pre-wrap; word-break:break-word;">{{ e.json }}</pre>
+        </sc-if>
+      </li>
+    </sc-for>
+  </ol>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:480,&quot;height&quot;:300},&quot;app&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;},&quot;events&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;array&quot;}}">
+class Component extends DCLogic {
+  state = { open: {} };
+  renderVals() {
+    const L = window.LLA; const app = this.props.app; const db = app.db;
+    const events = (this.props.events || []).slice().sort((a, b) => a.event_time < b.event_time ? -1 : a.event_time > b.event_time ? 1 : a.audit_id - b.audit_id);
+    const items = events.map(e => {
+      const open = !!this.state.open[e.audit_id];
+      const links = [];
+      if (e.upload_id) links.push({ label: 'Upload ' + e.upload_id, href: '#/uploads/' + e.upload_id });
+      if (e.alarm_id) links.push({ label: 'Alarm ' + e.alarm_id, href: '#/alarms?alarm=' + e.alarm_id });
+      if (e.incident_id) { const i = db.incidents.find(x => x.incident_id === e.incident_id); links.push({ label: i ? i.incident_code : 'Incident ' + e.incident_id, href: '#/incidents/' + e.incident_id }); }
+      if (e.ticket_id) { const t = db.tickets.find(x => x.ticket_id === e.ticket_id); links.push({ label: t ? t.ticket_number : 'Ticket ' + e.ticket_id, href: '#/tickets/' + e.ticket_id }); }
+      return {
+        time: L.fmtTime(e.event_time), stage: e.stage, outcome: e.outcome, tag: L.tag(e.outcome), actor: e.actor, reason: e.reason || 'No reason recorded',
+        links, hasDetails: !!e.details, open, toggleText: open ? 'Hide details' : 'Show details', json: L.json(e.details),
+        toggle: () => this.setState(s => ({ open: Object.assign({}, s.open, { [e.audit_id]: !s.open[e.audit_id] }) }))
+      };
+    });
+    return { items, empty: items.length === 0 };
+  }
+}
+</script>
+</body>
+</html>

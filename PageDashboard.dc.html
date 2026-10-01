@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div data-screen-label="Dashboard" style="padding:20px 24px 40px; display:flex; flex-direction:column; gap:16px;">
+  <div>
+    <h1 style="font-size:18px; font-weight:600; margin:0; line-height:1.3;">Dashboard</h1>
+    <p style="margin:2px 0 0; color:#5B6272;">Where the latest alarm files stand, and what is waiting for an analyst.</p>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px;">
+    <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+      <a href="{{ k.href }}" style="display:flex; flex-direction:column; gap:4px; background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px; padding:12px 14px; color:#1F2430; text-decoration:none;" style-hover="border-color:#B9BEC9;">
+        <span style="font-size:12px; color:#4A5160; font-weight:500;">{{ k.label }}</span>
+        <span style="font-size:24px; font-weight:600; line-height:1.2; font-variant-numeric:tabular-nums;">{{ k.value }}</span>
+        <span style="font-size:11.5px; color:#5B6272; line-height:1.4; text-wrap:pretty;">{{ k.caption }}</span>
+      </a>
+    </sc-for>
+  </div>
+
+  <section aria-labelledby="pipe-h" style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px;">
+    <div style="padding:10px 14px; border-bottom:1px solid #ECEEF2; display:flex; justify-content:space-between; align-items:center; gap:12px;">
+      <h2 id="pipe-h" style="font-size:13px; font-weight:600; margin:0;"><a href="#/agent-pipeline">Pipeline summary</a></h2>
+      <span style="font-size:12px; color:#5B6272;">All uploads</span>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; align-items:stretch; gap:8px; padding:14px;">
+      <sc-for list="{{ pipe }}" as="s" hint-placeholder-count="5">
+        <div style="display:flex; align-items:center; gap:8px; flex:1 1 130px;">
+          <div style="flex:1; border:1px solid #D9DCE3; border-radius:4px; padding:8px 10px; background:#F9FAFB; min-height:64px;">
+            <div style="font-size:12px; color:#4A5160;">{{ s.label }}</div>
+            <div style="font-size:18px; font-weight:600; font-variant-numeric:tabular-nums;">{{ s.value }}</div>
+            <div style="font-size:11px; color:#5B6272;">{{ s.note }}</div>
+          </div>
+          <sc-if value="{{ s.arrow }}" hint-placeholder-val="{{ true }}"><span aria-hidden="true" style="color:#8A90A0; font-size:14px;">→</span></sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(380px, 1fr)); gap:16px; align-items:start;">
+    <section aria-labelledby="wait-h" style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px;">
+      <div style="padding:10px 14px; border-bottom:1px solid #ECEEF2; display:flex; justify-content:space-between; align-items:center;">
+        <h2 id="wait-h" style="font-size:13px; font-weight:600; margin:0;">Waiting for approval</h2>
+        <a href="#/approvals" style="font-size:12px;">Approval queue</a>
+      </div>
+      <sc-if value="{{ hasPending }}" hint-placeholder-val="{{ true }}">
+        <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+          <thead><tr>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Ticket</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Summary</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Severity</th>
+            <th style="background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3;"><span style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0);">Actions</span></th>
+          </tr></thead>
+          <tbody>
+            <sc-for list="{{ pending }}" as="t" hint-placeholder-count="1">
+              <tr>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap; vertical-align:top;">{{ t.ticket_number }}</td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; vertical-align:top;">
+                  <div>{{ t.summary }}</div>
+                  <div style="font-size:11.5px; color:#5B6272; margin-top:2px;">{{ t.alarmText }} · started {{ t.start }}</div>
+                </td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; vertical-align:top;"><span style="{{ t.sevTag }}">{{ t.severity }}</span></td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; text-align:right; vertical-align:top;">
+                  <button type="button" onClick="{{ t.open }}" style="height:26px; padding:0 10px; background:#C4441A; color:#FFFFFF; border:1px solid #C4441A; border-radius:4px; font-size:12px; font-weight:500; cursor:pointer;" style-hover="background:#A83A16;">Open</button>
+                </td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </sc-if>
+      <sc-if value="{{ noPending }}" hint-placeholder-val="{{ false }}">
+        <p style="margin:0; padding:14px; color:#5B6272;">No tickets are waiting for approval.</p>
+      </sc-if>
+    </section>
+
+    <section aria-labelledby="audit-h" style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px;">
+      <div style="padding:10px 14px; border-bottom:1px solid #ECEEF2; display:flex; justify-content:space-between; align-items:center;">
+        <h2 id="audit-h" style="font-size:13px; font-weight:600; margin:0;">Recent audit activity</h2>
+        <a href="#/audit" style="font-size:12px;">Audit trail</a>
+      </div>
+      <ul style="list-style:none; margin:0; padding:0;">
+        <sc-for list="{{ recentAudit }}" as="e" hint-placeholder-count="8">
+          <li style="display:grid; grid-template-columns:132px minmax(0,1fr); gap:10px; padding:7px 14px; border-bottom:1px solid #ECEEF2; font-size:12.5px;">
+            <span style="color:#5B6272; white-space:nowrap; font-variant-numeric:tabular-nums;">{{ e.time }}</span>
+            <span style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+              <span style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;"><span style="{{ e.tag }}">{{ e.outcome }}</span><span style="color:#4A5160; font-size:11.5px;">{{ e.stage }} · {{ e.actor }}</span></span>
+              <span style="text-wrap:pretty;">{{ e.reason }}</span>
+            </span>
+          </li>
+        </sc-for>
+      </ul>
+    </section>
+  </div>
+
+  <section aria-labelledby="up-h" style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px;">
+    <div style="padding:10px 14px; border-bottom:1px solid #ECEEF2; display:flex; justify-content:space-between; align-items:center;">
+      <h2 id="up-h" style="font-size:13px; font-weight:600; margin:0;">Recent uploads</h2>
+      <a href="#/uploads" style="font-size:12px;">All uploads</a>
+    </div>
+    <div style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+        <thead><tr>
+          <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">ID</th>
+          <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">File name</th>
+          <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Uploaded at</th>
+          <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Status</th>
+          <th style="text-align:right; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Rows</th>
+          <th style="text-align:right; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Loaded</th>
+          <th style="text-align:right; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Rejected</th>
+        </tr></thead>
+        <tbody>
+          <sc-for list="{{ uploads }}" as="u" hint-placeholder-count="3">
+            <tr onClick="{{ u.open }}" style="cursor:pointer;" style-hover="background:#F9FAFB;">
+              <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;"><a href="{{ u.href }}">{{ u.upload_id }}</a></td>
+              <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;">{{ u.file_name }}</td>
+              <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap;">{{ u.at }}</td>
+              <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;"><span style="{{ u.tag }}">{{ u.statusText }}</span></td>
+              <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; text-align:right; font-variant-numeric:tabular-nums;">{{ u.rows_total }}</td>
+              <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; text-align:right; font-variant-numeric:tabular-nums;">{{ u.rows_loaded }}</td>
+              <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; text-align:right; font-variant-numeric:tabular-nums;">{{ u.rows_rejected }}</td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const app = this.props.app; const db = app.db; const L = window.LLA;
+    const sup = db.alarms.filter(a => /^SUPPRESSED/.test(a.pipeline_status));
+    const cnt = s => db.alarms.filter(a => a.pipeline_status === s).length;
+    const surviving = db.alarms.filter(a => a.pipeline_status === 'SURVIVED' || a.pipeline_status === 'CORRELATED').length;
+    const pend = db.tickets.filter(t => t.approval_status === 'PENDING');
+    const appr = db.tickets.filter(t => t.approval_status === 'APPROVED').length;
+    const rej = db.tickets.filter(t => t.approval_status === 'REJECTED').length;
+    const kpis = [
+      { label: 'Total alarms', value: db.alarms.length, href: '#/alarms', caption: 'Alarms loaded from all uploads after normalization' },
+      { label: 'Dedup and suppressed alarms', value: sup.length, href: '#/alarms?status=SUPPRESSED', caption: 'Alarms removed by maintenance window, duplicate or debounce check' },
+      { label: 'Incidents', value: db.incidents.length, href: '#/incidents', caption: 'Groups of surviving alarms made by the correlation agent' },
+      { label: 'Tickets', value: db.tickets.length, href: '#/tickets', caption: `One per incident. ${appr} approved, ${pend.length} pending, ${rej} rejected` }
+    ];
+    const pipe = [
+      { label: 'Alarms loaded', value: db.alarms.length, note: 'After normalization' },
+      { label: 'Suppressed', value: sup.length, note: `${cnt('SUPPRESSED_MAINTENANCE')} maintenance, ${cnt('SUPPRESSED_DEDUP')} duplicate, ${cnt('SUPPRESSED_DEBOUNCE')} debounce` },
+      { label: 'Surviving', value: surviving, note: 'Passed all checks' },
+      { label: 'Incidents', value: db.incidents.length, note: `${db.incidents.filter(i => i.grouping_basis === 'RULE').length} by rule, ${db.incidents.filter(i => i.grouping_basis !== 'RULE').length} by agent reasoning` },
+      { label: 'Tickets', value: db.tickets.length, note: `${pend.length} waiting for an analyst` }
+    ].map((s, i, arr) => Object.assign(s, { arrow: i < arr.length - 1 }));
+    const pending = pend.map(t => ({
+      ticket_number: t.ticket_number, summary: t.summary, severity: t.severity, sevTag: L.tag(t.severity),
+      alarmText: t.host + ' · ' + t.alarm_count + (t.alarm_count === 1 ? ' alarm' : ' alarms'), start: L.fmtTime(t.start_time),
+      open: () => app.nav('/approvals/' + t.ticket_id)
+    }));
+    const recentAudit = db.audit.slice().sort((a, b) => b.event_time < a.event_time ? -1 : b.event_time > a.event_time ? 1 : b.audit_id - a.audit_id).slice(0, 8).map(e => ({
+      time: L.fmtTime(e.event_time), outcome: e.outcome, tag: L.tag(e.outcome), stage: e.stage, actor: e.actor, reason: e.reason
+    }));
+    const uploads = db.uploads.slice().sort((a, b) => b.upload_id - a.upload_id).slice(0, 5).map(u => {
+      const running = u.run && u.run.steps.some(s => s.state === 'Running');
+      return Object.assign({}, u, { at: L.fmtTime(u.uploaded_at), statusText: u.status + (running ? ', processing' : ''), tag: L.tag(u.status), href: '#/uploads/' + u.upload_id, open: () => app.nav('/uploads/' + u.upload_id) });
+    });
+    return { kpis, pipe, pending, hasPending: pending.length > 0, noPending: pending.length === 0, recentAudit, uploads };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div data-screen-label="Upload detail" style="padding:20px 24px 40px; display:flex; flex-direction:column; gap:16px;">
+  <nav aria-label="Breadcrumb" style="display:flex; gap:6px; font-size:12px; color:#5B6272;"><a href="#/uploads">Uploads</a><span aria-hidden="true">/</span><span aria-current="page">Upload {{ u.upload_id }}</span></nav>
+  <sc-if value="{{ missing }}" hint-placeholder-val="{{ false }}">
+    <p style="margin:0; color:#5B6272;">There is no upload with this ID. <a href="#/uploads">Back to uploads</a>.</p>
+  </sc-if>
+  <sc-if value="{{ found }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
+        <div>
+          <h1 style="font-size:18px; font-weight:600; margin:0; line-height:1.3; display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><span>Upload {{ u.upload_id }}</span><span style="{{ statusTag }}">{{ u.status }}</span></h1>
+          <p style="margin:2px 0 0; color:#5B6272;">{{ u.file_name }} · uploaded by {{ u.uploaded_by }} at {{ uploadedAt }} · completed {{ completedAt }}</p>
+        </div>
+        <sc-if value="{{ canRerun }}" hint-placeholder-val="{{ false }}">
+          <button type="button" onClick="{{ rerun }}" style="height:30px; padding:0 12px; background:#C4441A; color:#FFFFFF; border:1px solid #C4441A; border-radius:4px; font-weight:500; cursor:pointer;" style-hover="background:#A83A16;">Run again</button>
+        </sc-if>
+      </div>
+
+      <div role="tablist" aria-label="Upload sections" style="display:flex; gap:0; border-bottom:1px solid #D9DCE3;">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="2">
+          <button type="button" role="tab" aria-selected="{{ t.selected }}" onClick="{{ t.go }}" style="{{ t.style }}">{{ t.label }}</button>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{ tabRun }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <ol style="list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px;">
+            <sc-for list="{{ steps }}" as="s" hint-placeholder-count="4">
+              <li style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px; display:grid; grid-template-columns:36px minmax(0,1fr); gap:12px; padding:12px 14px;">
+                <span style="{{ s.numStyle }}">{{ s.n }}</span>
+                <div style="display:flex; flex-direction:column; gap:8px; min-width:0;">
+                  <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <a href="{{ s.agentHref }}" style="font-weight:600;">{{ s.label }}</a>
+                    <span style="{{ s.tag }}">{{ s.state }}</span>
+                    <sc-if value="{{ s.running }}" hint-placeholder-val="{{ false }}">{{ spinner }}</sc-if>
+                    <span style="font-size:12px; color:#5B6272;">{{ s.agent }}</span>
+                  </div>
+                  <div style="font-size:12px; color:#4A5160;">Run message sent: <code style="font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; background:#F5F6F8; border:1px solid #ECEEF2; border-radius:3px; padding:0 4px;">{{ s.message }}</code></div>
+                  <sc-if value="{{ s.hasCounts }}" hint-placeholder-val="{{ false }}">
+                    <dl style="margin:0; display:flex; flex-wrap:wrap; gap:8px;">
+                      <sc-for list="{{ s.counts }}" as="c" hint-placeholder-count="5">
+                        <div style="border:1px solid #ECEEF2; background:#F9FAFB; border-radius:4px; padding:5px 10px; min-width:120px;">
+                          <dt style="font-size:11.5px; color:#5B6272; white-space:nowrap;">{{ c.label }}</dt>
+                          <dd style="margin:0; font-size:15px; font-weight:600; font-variant-numeric:tabular-nums;">{{ c.value }}</dd>
+                        </div>
+                      </sc-for>
+                    </dl>
+                  </sc-if>
+                  <sc-if value="{{ s.waitingNote }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size:12px; color:#5B6272;">{{ s.waitingNote }}</div>
+                  </sc-if>
+                  <sc-if value="{{ s.error }}" hint-placeholder-val="{{ false }}">
+                    <div role="alert" style="border:1px solid #EDC6C2; background:#FBEBEA; color:#9A1F17; border-radius:4px; padding:8px 10px; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; white-space:pre-wrap;">{{ s.error }}</div>
+                  </sc-if>
+                  <sc-if value="{{ s.showRejected }}" hint-placeholder-val="{{ false }}">
+                    <div style="border:1px solid #ECEEF2; border-radius:4px; overflow:hidden;">
+                      <div style="padding:6px 10px; background:#F7F8FA; border-bottom:1px solid #ECEEF2; font-size:12px; font-weight:600; color:#4A5160;">Rejected rows</div>
+                      <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+                        <thead><tr>
+                          <th style="text-align:right; font-weight:600; color:#4A5160; padding:6px 10px; border-bottom:1px solid #ECEEF2; width:80px; font-size:12px;">Row</th>
+                          <th style="text-align:left; font-weight:600; color:#4A5160; padding:6px 10px; border-bottom:1px solid #ECEEF2; font-size:12px;">Reason</th>
+                        </tr></thead>
+                        <tbody>
+                          <sc-for list="{{ rejected }}" as="rj" hint-placeholder-count="2">
+                            <tr>
+                              <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2; text-align:right; font-variant-numeric:tabular-nums;">{{ rj.row_number }}</td>
+                              <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2;">{{ rj.outcome_reason }}</td>
+                            </tr>
+                          </sc-for>
+                        </tbody>
+                      </table>
+                    </div>
+                  </sc-if>
+                </div>
+              </li>
+            </sc-for>
+          </ol>
+          <sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; gap:12px; flex-wrap:wrap; font-size:12.5px;">
+              <a href="{{ alarmsHref }}">View alarms from this upload</a>
+              <a href="#/incidents">View incidents</a>
+              <a href="#/tickets">View tickets</a>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ tabRaw }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px; overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+            <thead><tr>
+              <th style="text-align:right; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap; width:70px;">Row</th>
+              <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;">Load outcome</th>
+              <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;">Outcome reason</th>
+              <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;">Linked alarm</th>
+              <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;">Raw data</th>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{ raw }}" as="r" hint-placeholder-count="8">
+                <tr>
+                  <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; text-align:right; vertical-align:top; font-variant-numeric:tabular-nums;">{{ r.row_number }}</td>
+                  <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; vertical-align:top;"><span style="{{ r.tag }}">{{ r.load_outcome }}</span></td>
+                  <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; vertical-align:top;">{{ r.reason }}</td>
+                  <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; vertical-align:top; white-space:nowrap;">
+                    <sc-if value="{{ r.alarm_id }}" hint-placeholder-val="{{ true }}"><a href="{{ r.alarmHref }}">{{ r.alarm_id }}</a></sc-if>
+                    <sc-if value="{{ r.noAlarm }}" hint-placeholder-val="{{ false }}"><span style="color:#5B6272;">None</span></sc-if>
+                  </td>
+                  <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; vertical-align:top; min-width:260px;">
+                    <button type="button" aria-expanded="{{ r.open }}" onClick="{{ r.toggle }}" style="border:0; background:transparent; padding:0; color:#B03C14; cursor:pointer; font-size:12.5px;" style-hover="text-decoration:underline;">{{ r.toggleText }}</button>
+                    <sc-if value="{{ r.open }}" hint-placeholder-val="{{ false }}">
+                      <pre style="margin:6px 0 0; padding:8px 10px; background:#F7F8FA; border:1px solid #ECEEF2; border-radius:4px; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:11.5px; line-height:1.5; white-space:pre-wrap; word-break:break-word;">{{ r.json }}</pre>
+                    </sc-if>
+                  </td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { tab: 'run', open: {} };
+  renderVals() {
+    const app = this.props.app; const L = window.LLA; const db = app.db;
+    const id = Number(app.route.parts[1]);
+    const u = db.uploads.find(x => x.upload_id === id);
+    if (!u) return { missing: true, found: false, u: { upload_id: app.route.parts[1] } };
+    const steps0 = u.run ? u.run.steps : [];
+    const running = steps0.some(s => s.state === 'Running');
+    const agents = ['agent:normalization', 'agent:dedup', 'agent:correlation', 'agent:ticketing'];
+    const rejected = db.raw.filter(r => r.upload_id === id && /^Rejected/.test(r.outcome_reason || ''));
+    const steps = steps0.map((s, i) => {
+      const tone = { Waiting: ['#FFFFFF', '#5B6272', '#C9CDD6'], Running: ['#FBF5DE', '#715400', '#E7DBA6'], Done: ['#E9F4EC', '#1D6436', '#C2DDCB'], Failed: ['#FBEBEA', '#9A1F17', '#EDC6C2'] }[s.state];
+      return {
+        n: i + 1, label: L.STEP_LABELS[i], agentHref: '#/agent-pipeline?agent=' + (i + 1), state: s.state, tag: L.tag(s.state), running: s.state === 'Running', agent: agents[i],
+        message: s.message, hasCounts: !!s.counts, counts: s.counts ? Object.entries(s.counts).map(([k, v]) => ({ label: L.COUNT_LABELS[k] || k, value: v })) : [],
+        error: s.error || null,
+        waitingNote: s.state === 'Waiting' ? (steps0.some(x => x.state === 'Failed') ? 'Not started because an earlier step failed.' : 'Starts when the previous step reports back.') : (s.state === 'Running' ? 'Waiting for the agent to report back.' : null),
+        showRejected: i === 0 && s.state === 'Done' && rejected.length > 0,
+        numStyle: { width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 12, background: tone[0], color: tone[1], border: '1px solid ' + tone[2] }
+      };
+    });
+    const raw = db.raw.filter(r => r.upload_id === id).map(r => {
+      const open = !!this.state.open[r.raw_id];
+      return {
+        row_number: r.row_number, load_outcome: r.load_outcome, tag: L.tag(r.load_outcome),
+        reason: r.outcome_reason || 'Not processed yet', alarm_id: r.alarm_id, noAlarm: !r.alarm_id, alarmHref: '#/alarms?alarm=' + r.alarm_id,
+        open, toggleText: open ? 'Hide raw_data' : 'Show raw_data', json: L.json(r.raw_data),
+        toggle: () => this.setState(s => ({ open: Object.assign({}, s.open, { [r.raw_id]: !s.open[r.raw_id] }) }))
+      };
+    });
+    const tabs = [['run', 'Pipeline run'], ['raw', `Raw rows (${raw.length})`]].map(([k, label]) => {
+      const sel = this.state.tab === k;
+      return { label, selected: sel ? 'true' : 'false', go: () => this.setState({ tab: k }), style: { height: 34, padding: '0 14px', border: 0, borderBottom: '2px solid ' + (sel ? '#C4441A' : 'transparent'), marginBottom: -1, background: 'transparent', color: sel ? '#1F2430' : '#4A5160', fontWeight: sel ? 600 : 500, cursor: 'pointer' } };
+    });
+    return {
+      found: true, missing: false, u, statusTag: L.tag(u.status), uploadedAt: L.fmtTime(u.uploaded_at),
+      completedAt: u.completed_at ? L.fmtTime(u.completed_at) : (running ? 'in progress' : 'not completed'),
+      canRerun: u.status === 'FAILED' && !running, rerun: () => app.actions.runUpload(id),
+      tabs, tabRun: this.state.tab === 'run', tabRaw: this.state.tab === 'raw',
+      steps, rejected, raw, isDone: steps0.length === 4 && steps0[3].state === 'Done', alarmsHref: '#/alarms?upload=' + id,
+      spinner: React.createElement('span', { 'aria-hidden': true, style: { width: 12, height: 12, border: '2px solid #E7DBA6', borderTopColor: '#715400', borderRadius: '50%', display: 'inline-block', animation: 'llaspin 0.8s linear infinite' } })
+    };
+  }
+}
+</script>
+</body>
+</html>

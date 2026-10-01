@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div data-screen-label="Incident detail" style="padding:20px 24px 40px; display:flex; flex-direction:column; gap:16px;">
+  <nav aria-label="Breadcrumb" style="display:flex; gap:6px; font-size:12px; color:#5B6272;"><a href="#/incidents">Incidents</a><span aria-hidden="true">/</span><span aria-current="page">{{ inc.incident_code }}</span></nav>
+  <sc-if value="{{ missing }}" hint-placeholder-val="{{ false }}"><p style="margin:0; color:#5B6272;">There is no incident with this ID. <a href="#/incidents">Back to incidents</a>.</p></sc-if>
+  <sc-if value="{{ found }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div>
+        <h1 style="font-size:18px; font-weight:600; margin:0; line-height:1.3; display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><span>{{ inc.incident_code }}</span><span style="{{ hiTag }}">{{ inc.highest_severity }}</span><span style="{{ basisTag }}">{{ inc.grouping_basis }}</span></h1>
+        <p style="margin:2px 0 0; color:#5B6272;">{{ inc.host }} · {{ alarmCount }} alarms · rule {{ ruleCode }} · window {{ inc.time_window_minutes }} min · created {{ created }}</p>
+      </div>
+
+      <div style="display:grid; grid-template-columns:minmax(0,2fr) minmax(260px,1fr); gap:16px; align-items:start;">
+        <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+          <section aria-labelledby="rs-h" style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px;">
+            <div style="padding:10px 14px; border-bottom:1px solid #ECEEF2;"><h2 id="rs-h" style="font-size:13px; font-weight:600; margin:0;">Correlation reasoning</h2></div>
+            <div style="padding:12px 14px; display:flex; flex-direction:column; gap:6px;">
+              <span style="font-size:11.5px; color:#5B6272;">Written by agent:correlation</span>
+              <pre style="margin:0; font-family:inherit; font-size:13px; line-height:1.55; white-space:pre-wrap; text-wrap:pretty;">{{ inc.llm_reasoning }}</pre>
+            </div>
+          </section>
+
+          <section aria-labelledby="al-h" style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px;">
+            <div style="padding:10px 14px; border-bottom:1px solid #ECEEF2;"><h2 id="al-h" style="font-size:13px; font-weight:600; margin:0;">Alarms in this incident</h2></div>
+            <div style="overflow-x:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+                <thead><tr>
+                  <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Role</th>
+                  <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Alarm ID</th>
+                  <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Severity</th>
+                  <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Problem</th>
+                  <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;">Alarm time</th>
+                  <th style="text-align:right; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;">Duration (min)</th>
+                </tr></thead>
+                <tbody>
+                  <sc-for list="{{ alarms }}" as="a" hint-placeholder-count="2">
+                    <tr>
+                      <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;"><span style="{{ a.roleTag }}">{{ a.role }}</span></td>
+                      <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;"><a href="{{ a.href }}">{{ a.alarm_id }}</a></td>
+                      <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;"><span style="{{ a.sevTag }}">{{ a.severity }}</span></td>
+                      <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;">{{ a.problem }}</td>
+                      <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap; font-variant-numeric:tabular-nums;">{{ a.time }}</td>
+                      <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums;">{{ a.duration }}</td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section aria-labelledby="ev-h">
+            <h2 id="ev-h" style="font-size:13px; font-weight:600; margin:0 0 6px;">Audit events for this incident</h2>
+            <dc-import name="AuditEvents" app="{{ app }}" events="{{ audit }}" hint-size="100%,160px"></dc-import>
+          </section>
+        </div>
+
+        <section aria-labelledby="tk-h" style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px;">
+          <div style="padding:10px 14px; border-bottom:1px solid #ECEEF2;"><h2 id="tk-h" style="font-size:13px; font-weight:600; margin:0;">Linked ticket</h2></div>
+          <sc-if value="{{ hasTicket }}" hint-placeholder-val="{{ true }}">
+            <dl style="margin:0; display:grid; grid-template-columns:110px minmax(0,1fr); font-size:12.5px;">
+              <dt style="padding:6px 14px; color:#4A5160; border-bottom:1px solid #ECEEF2;">Ticket</dt><dd style="margin:0; padding:6px 14px 6px 0; border-bottom:1px solid #ECEEF2;"><a href="{{ t.href }}">{{ t.ticket_number }}</a></dd>
+              <dt style="padding:6px 14px; color:#4A5160; border-bottom:1px solid #ECEEF2;">Severity</dt><dd style="margin:0; padding:6px 14px 6px 0; border-bottom:1px solid #ECEEF2;"><span style="{{ t.sevTag }}">{{ t.severity }}</span></dd>
+              <dt style="padding:6px 14px; color:#4A5160; border-bottom:1px solid #ECEEF2;">Approval</dt><dd style="margin:0; padding:6px 14px 6px 0; border-bottom:1px solid #ECEEF2;"><span style="{{ t.apTag }}">{{ t.approval_status }}</span></dd>
+              <dt style="padding:6px 14px; color:#4A5160; border-bottom:1px solid #ECEEF2;">Status</dt><dd style="margin:0; padding:6px 14px 6px 0; border-bottom:1px solid #ECEEF2;">{{ t.ticket_status }}</dd>
+              <dt style="padding:6px 14px; color:#4A5160;">Summary</dt><dd style="margin:0; padding:6px 14px 6px 0;">{{ t.summary }}</dd>
+            </dl>
+          </sc-if>
+          <sc-if value="{{ noTicket }}" hint-placeholder-val="{{ false }}"><p style="margin:0; padding:12px 14px; color:#5B6272;">No ticket yet.</p></sc-if>
+        </section>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const app = this.props.app; const db = app.db; const L = window.LLA;
+    const id = Number(app.route.parts[1]);
+    const inc = db.incidents.find(i => i.incident_id === id);
+    if (!inc) return { missing: true, found: false, inc: { incident_code: 'Incident ' + app.route.parts[1] } };
+    const rule = db.rules.find(r => r.rule_id === inc.rule_id);
+    const order = { LEAD: 0, MEMBER: 1, SYMPTOM: 2 };
+    const links = db.incidentAlarms.filter(x => x.incident_id === id).sort((a, b) => order[a.alarm_role] - order[b.alarm_role]);
+    const alarms = links.map(x => { const a = db.alarms.find(y => y.alarm_id === x.alarm_id); return Object.assign({}, a, { role: x.alarm_role, roleTag: L.tag(x.alarm_role), sevTag: L.tag(a.severity), time: L.fmtTime(a.alarm_time), duration: L.fmtDuration(a), href: '#/alarms?alarm=' + a.alarm_id }); });
+    const tk = db.tickets.find(t => t.incident_id === id);
+    return {
+      found: true, missing: false, app, inc, hiTag: L.tag(inc.highest_severity), basisTag: L.tag(inc.grouping_basis),
+      ruleCode: rule ? rule.rule_code : 'none', alarmCount: alarms.length, created: L.fmtTime(inc.created_at), alarms,
+      hasTicket: !!tk, noTicket: !tk,
+      t: tk ? Object.assign({}, tk, { href: '#/tickets/' + tk.ticket_id, sevTag: L.tag(tk.severity), apTag: L.tag(tk.approval_status) }) : {},
+      audit: db.audit.filter(e => e.incident_id === id)
+    };
+  }
+}
+</script>
+</body>
+</html>

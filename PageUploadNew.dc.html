@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div data-screen-label="Upload alarm file" style="padding:20px 24px 40px; display:flex; flex-direction:column; gap:16px;">
+  <nav aria-label="Breadcrumb" style="display:flex; gap:6px; font-size:12px; color:#5B6272;"><a href="#/uploads">Uploads</a><span aria-hidden="true">/</span><span aria-current="page">Upload alarm file</span></nav>
+  <div>
+    <h1 style="font-size:18px; font-weight:600; margin:0; line-height:1.3;">Upload alarm file</h1>
+    <p style="margin:2px 0 0; color:#5B6272;">Choose a CSV export of network alarms. Check the preview, then start processing.</p>
+  </div>
+
+  <div style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px; padding:14px; display:flex; flex-direction:column; gap:12px;">
+    <label onDragOver="{{ onDragOver }}" onDragLeave="{{ onDragLeave }}" onDrop="{{ onDrop }}" style="{{ dropStyle }}">
+      <input type="file" accept=".csv,text/csv" onChange="{{ onPick }}" style="position:absolute; width:1px; height:1px; opacity:0;">
+      <span style="font-weight:600;">Drag a .csv file here, or click to choose a file</span>
+      <span style="font-size:12px; color:#5B6272;">Required headers: Severity, Time, Recovery time, Status, Host, Problem, Duration, Ack, Actions, Tags</span>
+    </label>
+    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; font-size:12px; color:#5B6272;">
+      <span>No file at hand?</span>
+      <button type="button" onClick="{{ useExample }}" style="border:0; background:transparent; padding:0; color:#B03C14; cursor:pointer; font-size:12px;" style-hover="text-decoration:underline;">Use the example file (8 rows)</button>
+    </div>
+    <sc-if value="{{ readError }}" hint-placeholder-val="{{ false }}">
+      <div role="alert" style="border:1px solid #EDC6C2; background:#FBEBEA; color:#9A1F17; border-radius:4px; padding:8px 10px;">{{ readError }}</div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ hasFile }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <section aria-labelledby="chk-h" style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px;">
+        <div style="padding:10px 14px; border-bottom:1px solid #ECEEF2; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+          <h2 id="chk-h" style="font-size:13px; font-weight:600; margin:0;">Header check</h2>
+          <span style="font-size:12px; color:#4A5160;">{{ fileName }} · {{ rowCount }} data rows</span>
+        </div>
+        <div style="padding:12px 14px; display:flex; flex-direction:column; gap:10px;">
+          <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            <sc-for list="{{ headerChecks }}" as="h" hint-placeholder-count="10">
+              <span style="{{ h.tag }}">{{ h.text }}</span>
+            </sc-for>
+          </div>
+          <sc-if value="{{ hasMissing }}" hint-placeholder-val="{{ false }}">
+            <div role="alert" style="border:1px solid #EDC6C2; background:#FBEBEA; color:#9A1F17; border-radius:4px; padding:8px 10px;">
+              <strong>This file cannot be processed.</strong> Missing headers: {{ missingText }}. Add these columns to the export and upload it again.
+            </div>
+          </sc-if>
+          <sc-if value="{{ noRows }}" hint-placeholder-val="{{ false }}">
+            <div role="alert" style="border:1px solid #EDC6C2; background:#FBEBEA; color:#9A1F17; border-radius:4px; padding:8px 10px;">The file has headers but no data rows.</div>
+          </sc-if>
+          <sc-if value="{{ allGood }}" hint-placeholder-val="{{ false }}">
+            <div style="color:#1D6436;">All required headers are present.</div>
+          </sc-if>
+        </div>
+      </section>
+
+      <section aria-labelledby="pre-h" style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px;">
+        <div style="padding:10px 14px; border-bottom:1px solid #ECEEF2;">
+          <h2 id="pre-h" style="font-size:13px; font-weight:600; margin:0;">Preview, first {{ previewCount }} rows</h2>
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:12px;">
+            <thead><tr>
+              <th style="text-align:right; font-weight:600; color:#4A5160; background:#F7F8FA; padding:6px 10px; border-bottom:1px solid #D9DCE3; white-space:nowrap;">Row</th>
+              <sc-for list="{{ headers }}" as="hd" hint-placeholder-count="10">
+                <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:6px 10px; border-bottom:1px solid #D9DCE3; white-space:nowrap;">{{ hd }}</th>
+              </sc-for>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{ preview }}" as="pr" hint-placeholder-count="5">
+                <tr>
+                  <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2; text-align:right; color:#5B6272;">{{ pr.n }}</td>
+                  <sc-for list="{{ pr.cells }}" as="c" hint-placeholder-count="10">
+                    <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2; vertical-align:top; max-width:340px;">{{ c }}</td>
+                  </sc-for>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <button type="button" onClick="{{ clear }}" style="height:30px; padding:0 12px; background:#FFFFFF; color:#1F2430; border:1px solid #C9CDD6; border-radius:4px; font-weight:500; cursor:pointer;" style-hover="background:#F5F6F8;">Choose a different file</button>
+        <button type="button" onClick="{{ start }}" disabled="{{ cannotStart }}" style="{{ startStyle }}">Start processing</button>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { drag: false, fileName: null, parsed: null, readError: null };
+
+  load = (name, text) => {
+    const parsed = window.LLA.parseCSV(text);
+    this.setState({ fileName: name, parsed, readError: null });
+  };
+  readFile = f => {
+    if (!f) return;
+    if (!/\.csv$/i.test(f.name)) { this.setState({ readError: `"${f.name}" is not a .csv file. Choose a CSV export of alarms.`, parsed: null, fileName: null }); return; }
+    const r = new FileReader();
+    r.onload = () => this.load(f.name, String(r.result));
+    r.onerror = () => this.setState({ readError: 'The file could not be read.' });
+    r.readAsText(f);
+  };
+
+  renderVals() {
+    const app = this.props.app; const L = window.LLA;
+    const { parsed, fileName, drag, readError } = this.state;
+    const headers = parsed ? parsed.headers : [];
+    const missing = parsed ? parsed.missing : [];
+    const data = parsed ? parsed.data : [];
+    const cannot = !parsed || missing.length > 0 || data.length === 0;
+    const okTag = L.tag('Approved'), badTag = L.tag('Rejected');
+    return {
+      dropStyle: { position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '28px 16px', border: '1px dashed ' + (drag ? '#C4441A' : '#B9BEC9'), background: drag ? '#FCEDE6' : '#F9FAFB', borderRadius: 4, cursor: 'pointer', textAlign: 'center' },
+      onDragOver: e => { e.preventDefault(); if (!drag) this.setState({ drag: true }); },
+      onDragLeave: () => this.setState({ drag: false }),
+      onDrop: e => { e.preventDefault(); this.setState({ drag: false }); this.readFile(e.dataTransfer.files[0]); },
+      onPick: e => { this.readFile(e.target.files[0]); e.target.value = ''; },
+      useExample: () => this.load('lla_b2b_alarms_2026-09-16_example.csv', L.exampleCSV()),
+      readError,
+      hasFile: !!parsed, fileName, rowCount: data.length,
+      headerChecks: L.REQUIRED_HEADERS.map(h => ({ text: h + (missing.includes(h) ? ': missing' : ': found'), tag: missing.includes(h) ? badTag : okTag })),
+      hasMissing: missing.length > 0, missingText: missing.join(', '),
+      noRows: !!parsed && missing.length === 0 && data.length === 0,
+      allGood: !!parsed && missing.length === 0 && data.length > 0,
+      headers, previewCount: Math.min(10, data.length),
+      preview: data.slice(0, 10).map((r, i) => ({ n: i + 1, cells: headers.map(h => r[h]) })),
+      clear: () => this.setState({ parsed: null, fileName: null }),
+      cannotStart: cannot,
+      startStyle: { height: 30, padding: '0 12px', background: cannot ? '#ECEEF2' : '#C4441A', color: cannot ? '#5B6272' : '#FFFFFF', border: '1px solid ' + (cannot ? '#D9DCE3' : '#C4441A'), borderRadius: 4, fontWeight: 500, cursor: cannot ? 'not-allowed' : 'pointer' },
+      start: () => {
+        if (cannot) return;
+        const id = app.actions.createUpload(fileName, data);
+        app.actions.runUpload(id);
+        app.nav('/uploads/' + id);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

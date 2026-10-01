@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div data-screen-label="Settings" style="padding:20px 24px 40px; display:flex; flex-direction:column; gap:14px;">
+  <div>
+    <h1 style="font-size:18px; font-weight:600; margin:0; line-height:1.3;">Settings</h1>
+    <p style="margin:2px 0 0; color:#5B6272;">Reference data and limits the agents use. Maintained by the NOC team.</p>
+  </div>
+  <div role="tablist" aria-label="Settings sections" style="display:flex; border-bottom:1px solid #D9DCE3; flex-wrap:wrap;">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+      <button type="button" role="tab" aria-selected="{{ t.selected }}" onClick="{{ t.go }}" style="{{ t.style }}">{{ t.label }}</button>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{ tabMw }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+        <p style="margin:0; font-size:12.5px; color:#4A5160;">Alarms on a host inside one of these windows are suppressed by the deduplication agent. Agents read these settings and never change them.</p>
+        <button type="button" onClick="{{ addWindow }}" style="height:30px; padding:0 12px; background:#C4441A; color:#FFFFFF; border:1px solid #C4441A; border-radius:4px; font-weight:500; cursor:pointer;" style-hover="background:#A83A16;">Add maintenance window</button>
+      </div>
+      <div style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px; overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+          <thead><tr>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">ID</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Host</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;">Start time</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;">End time</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Description</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;">Created at</th>
+            <th style="background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3;"><span style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0);">Actions</span></th>
+          </tr></thead>
+          <tbody>
+            <sc-for list="{{ windows }}" as="w" hint-placeholder-count="3">
+              <tr>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;">{{ w.window_id }}</td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap;">{{ w.host }}</td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap; font-variant-numeric:tabular-nums;">{{ w.start }}</td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap; font-variant-numeric:tabular-nums;">{{ w.end }}</td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; min-width:220px;">{{ w.desc }}</td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap; font-variant-numeric:tabular-nums;">{{ w.created }}</td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; text-align:right;">
+                  <button type="button" onClick="{{ w.edit }}" style="height:26px; padding:0 10px; background:#FFFFFF; color:#1F2430; border:1px solid #C9CDD6; border-radius:4px; font-size:12px; cursor:pointer;" style-hover="background:#F5F6F8;">Edit</button>
+                </td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ tabSev }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <p style="margin:0; font-size:12.5px; color:#4A5160;">Ticket severity and whether an analyst must approve come only from this table, never from an agent. S1 follows the same path as S2: an analyst approves. Agents read these settings and never change them.</p>
+      <div style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px; overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+          <thead><tr>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Alarm severity</th>
+            <th style="text-align:right; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Severity rank</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Ticket severity</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Approval</th>
+          </tr></thead>
+          <tbody>
+            <sc-for list="{{ severity }}" as="s" hint-placeholder-count="3">
+              <tr>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;"><span style="{{ s.tag }}">{{ s.severity_name }}</span></td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; text-align:right; font-variant-numeric:tabular-nums;">{{ s.severity_rank }}</td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;"><span style="{{ s.tsTag }}">{{ s.ticket_severity }}</span></td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;">{{ s.approval }}</td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin:0; font-size:12px; color:#5B6272;">Lower rank means more severe. Read only.</p>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ tabRules }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <p style="margin:0; font-size:12.5px; color:#4A5160;">Rules the correlation agent checks before falling back to its own reasoning. Agents read these settings and never change them.</p>
+      <div style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px; overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+          <thead><tr>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;">Rule code</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Name</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Condition</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Action</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Source</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Active</th>
+          </tr></thead>
+          <tbody>
+            <sc-for list="{{ rules }}" as="r" hint-placeholder-count="3">
+              <tr>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px;">{{ r.rule_code }}</td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap;">{{ r.rule_name }}</td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;">{{ r.condition_text }}</td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;">{{ r.action_text }}</td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap;">{{ r.rule_source }}</td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;"><span style="{{ r.activeTag }}">{{ r.active }}</span></td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ tabCfg }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <p style="margin:0; font-size:12.5px; color:#4A5160;">Limits used by the deduplication and correlation agents on the next run. Agents read these settings and never change them.</p>
+      <div style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px; overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+          <thead><tr>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Key</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Value</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px;">Description</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;">Updated at</th>
+            <th style="background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3;"><span style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0);">Actions</span></th>
+          </tr></thead>
+          <tbody>
+            <sc-for list="{{ config }}" as="c" hint-placeholder-count="2">
+              <tr>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px;">{{ c.config_key }}</td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap;">
+                  <sc-if value="{{ c.editing }}" hint-placeholder-val="{{ false }}">
+                    <span style="display:flex; flex-direction:column; gap:3px;">
+                      <input type="number" min="1" max="1440" aria-label="{{ c.inputLabel }}" value="{{ c.draft }}" onChange="{{ c.onDraft }}" style="height:28px; width:90px; border:1px solid #C9CDD6; border-radius:4px; padding:0 6px;">
+                      <sc-if value="{{ c.error }}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size:11.5px; color:#9A1F17;">{{ c.error }}</span></sc-if>
+                    </span>
+                  </sc-if>
+                  <sc-if value="{{ c.notEditing }}" hint-placeholder-val="{{ true }}"><span style="font-variant-numeric:tabular-nums;">{{ c.config_value }}</span></sc-if>
+                </td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;">{{ c.description }}</td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap; font-variant-numeric:tabular-nums;">{{ c.updated }}</td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; text-align:right; white-space:nowrap;">
+                  <sc-if value="{{ c.notEditing }}" hint-placeholder-val="{{ true }}">
+                    <button type="button" onClick="{{ c.edit }}" style="height:26px; padding:0 10px; background:#FFFFFF; color:#1F2430; border:1px solid #C9CDD6; border-radius:4px; font-size:12px; cursor:pointer;" style-hover="background:#F5F6F8;">Edit value</button>
+                  </sc-if>
+                  <sc-if value="{{ c.editing }}" hint-placeholder-val="{{ false }}">
+                    <span style="display:inline-flex; gap:6px;">
+                      <button type="button" onClick="{{ c.cancel }}" style="height:26px; padding:0 10px; background:#FFFFFF; color:#1F2430; border:1px solid #C9CDD6; border-radius:4px; font-size:12px; cursor:pointer;" style-hover="background:#F5F6F8;">Cancel</button>
+                      <button type="button" onClick="{{ c.save }}" style="height:26px; padding:0 10px; background:#C4441A; color:#FFFFFF; border:1px solid #C4441A; border-radius:4px; font-size:12px; font-weight:500; cursor:pointer;" style-hover="background:#A83A16;">Save</button>
+                    </span>
+                  </sc-if>
+                </td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ formOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; inset:0; background:rgba(31,36,48,0.28); z-index:50; display:flex; align-items:center; justify-content:center; padding:16px;" onKeyDown="{{ dlgKey }}">
+      <div role="dialog" aria-modal="true" aria-labelledby="mw-t" style="width:min(460px, 100%); background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px; box-shadow:0 6px 20px rgba(20,24,40,0.16); display:flex; flex-direction:column;">
+        <div style="padding:12px 16px; border-bottom:1px solid #ECEEF2;"><h2 id="mw-t" style="font-size:14px; font-weight:600; margin:0;">{{ formTitle }}</h2></div>
+        <div style="padding:12px 16px; display:flex; flex-direction:column; gap:10px;">
+          <label style="display:flex; flex-direction:column; gap:4px; font-size:12.5px;">
+            <span style="font-weight:500;">Host</span>
+            <input ref="{{ firstRef }}" list="mw-hosts" value="{{ form.host }}" onChange="{{ onHost }}" style="height:30px; border:1px solid #C9CDD6; border-radius:4px; padding:0 8px;">
+            <datalist id="mw-hosts"><sc-for list="{{ hosts }}" as="h" hint-placeholder-count="5"><option value="{{ h }}"></option></sc-for></datalist>
+          </label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <label style="display:flex; flex-direction:column; gap:4px; font-size:12.5px;">
+              <span style="font-weight:500;">Start time</span>
+              <input type="datetime-local" value="{{ form.start }}" onChange="{{ onStart }}" style="height:30px; border:1px solid #C9CDD6; border-radius:4px; padding:0 6px;">
+            </label>
+            <label style="display:flex; flex-direction:column; gap:4px; font-size:12.5px;">
+              <span style="font-weight:500;">End time</span>
+              <input type="datetime-local" value="{{ form.end }}" onChange="{{ onEnd }}" style="height:30px; border:1px solid #C9CDD6; border-radius:4px; padding:0 6px;">
+            </label>
+          </div>
+          <label style="display:flex; flex-direction:column; gap:4px; font-size:12.5px;">
+            <span style="font-weight:500;">Description (optional)</span>
+            <input value="{{ form.description }}" onChange="{{ onDesc }}" placeholder="For example: Junos upgrade (CHG-49007)" style="height:30px; border:1px solid #C9CDD6; border-radius:4px; padding:0 8px;">
+          </label>
+          <sc-if value="{{ formError }}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size:12px; color:#9A1F17;">{{ formError }}</span></sc-if>
+        </div>
+        <div style="padding:10px 16px; border-top:1px solid #ECEEF2; display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" onClick="{{ closeForm }}" style="height:30px; padding:0 12px; background:#FFFFFF; color:#1F2430; border:1px solid #C9CDD6; border-radius:4px; font-weight:500; cursor:pointer;" style-hover="background:#F5F6F8;">Cancel</button>
+          <button type="button" onClick="{{ saveForm }}" style="height:30px; padding:0 12px; background:#C4441A; color:#FFFFFF; border:1px solid #C4441A; border-radius:4px; font-weight:500; cursor:pointer;" style-hover="background:#A83A16;">Save window</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ confirmOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; inset:0; background:rgba(31,36,48,0.28); z-index:50; display:flex; align-items:center; justify-content:center; padding:16px;" onKeyDown="{{ dlgKey }}">
+      <div role="dialog" aria-modal="true" aria-labelledby="cf-t" style="width:min(420px, 100%); background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px; box-shadow:0 6px 20px rgba(20,24,40,0.16); display:flex; flex-direction:column;">
+        <div style="padding:12px 16px; border-bottom:1px solid #ECEEF2;"><h2 id="cf-t" style="font-size:14px; font-weight:600; margin:0;">Change {{ confirm.key }}?</h2></div>
+        <div style="padding:12px 16px;"><p style="margin:0;">The value changes from {{ confirm.from }} to {{ confirm.to }}. It applies to the next pipeline run. Alarms already processed are not re-evaluated.</p></div>
+        <div style="padding:10px 16px; border-top:1px solid #ECEEF2; display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" onClick="{{ cancelConfirm }}" style="height:30px; padding:0 12px; background:#FFFFFF; color:#1F2430; border:1px solid #C9CDD6; border-radius:4px; font-weight:500; cursor:pointer;" style-hover="background:#F5F6F8;">Cancel</button>
+          <button type="button" ref="{{ confirmRef }}" onClick="{{ doConfirm }}" style="height:30px; padding:0 12px; background:#C4441A; color:#FFFFFF; border:1px solid #C4441A; border-radius:4px; font-weight:500; cursor:pointer;" style-hover="background:#A83A16;">Change value</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { tab: this.props.app.route.query.tab || 'mw', form: null, formError: null, edit: {}, errors: {}, confirm: null };
+  firstRef = React.createRef();
+  confirmRef = React.createRef();
+  componentDidUpdate(_, prev) {
+    if (this.state.form && !prev.form && this.firstRef.current) this.firstRef.current.focus();
+    if (this.state.confirm && !prev.confirm && this.confirmRef.current) this.confirmRef.current.focus();
+  }
+  toLocal = s => s ? s.slice(0, 16).replace(' ', 'T') : '';
+  fromLocal = s => s ? s.replace('T', ' ') + ':00' : '';
+  setForm = (k, v) => this.setState(s => ({ form: Object.assign({}, s.form, { [k]: v }), formError: null }));
+
+  renderVals() {
+    const app = this.props.app; const db = app.db; const L = window.LLA;
+    const { tab, form, formError, edit, errors, confirm } = this.state;
+    const tabs = [['mw', 'Maintenance windows'], ['sev', 'Severity mapping'], ['rules', 'Correlation rules'], ['cfg', 'Pipeline config']].map(([k, label]) => {
+      const sel = tab === k;
+      return { label, selected: sel ? 'true' : 'false', go: () => this.setState({ tab: k }), style: { height: 34, padding: '0 14px', border: 0, borderBottom: '2px solid ' + (sel ? '#C4441A' : 'transparent'), marginBottom: -1, background: 'transparent', color: sel ? '#1F2430' : '#4A5160', fontWeight: sel ? 600 : 500, cursor: 'pointer' } };
+    });
+    const windows = db.maintenance.slice().sort((a, b) => a.start_time < b.start_time ? 1 : -1).map(w => ({
+      window_id: w.window_id, host: w.host, start: L.fmtTime(w.start_time), end: L.fmtTime(w.end_time), desc: w.description || 'Not provided', created: L.fmtTime(w.created_at),
+      edit: () => this.setState({ form: { window_id: w.window_id, host: w.host, start: this.toLocal(w.start_time), end: this.toLocal(w.end_time), description: w.description || '' }, formError: null })
+    }));
+    const config = db.config.map(c => {
+      const editing = edit[c.config_key] != null;
+      return Object.assign({}, c, {
+        editing, notEditing: !editing, draft: editing ? edit[c.config_key] : '', error: errors[c.config_key] || null, updated: L.fmtTime(c.updated_at), inputLabel: 'New value for ' + c.config_key,
+        edit: () => this.setState(s => ({ edit: Object.assign({}, s.edit, { [c.config_key]: c.config_value }) })),
+        onDraft: e => { const v = e.target.value; this.setState(s => ({ edit: Object.assign({}, s.edit, { [c.config_key]: v }), errors: Object.assign({}, s.errors, { [c.config_key]: null }) })); },
+        cancel: () => this.setState(s => { const ed = Object.assign({}, s.edit); delete ed[c.config_key]; return { edit: ed }; }),
+        save: () => {
+          const v = String(edit[c.config_key]).trim();
+          if (!/^\d+$/.test(v) || +v < 1 || +v > 1440) { this.setState(s => ({ errors: Object.assign({}, s.errors, { [c.config_key]: 'Enter whole minutes from 1 to 1440' }) })); return; }
+          if (v === c.config_value) { this.setState(s => { const ed = Object.assign({}, s.edit); delete ed[c.config_key]; return { edit: ed }; }); return; }
+          this.setState({ confirm: { key: c.config_key, from: c.config_value, to: v } });
+        }
+      });
+    });
+    const closeForm = () => this.setState({ form: null, formError: null });
+    return {
+      tabs, tabMw: tab === 'mw', tabSev: tab === 'sev', tabRules: tab === 'rules', tabCfg: tab === 'cfg',
+      windows, addWindow: () => this.setState({ form: { host: '', start: '', end: '', description: '' }, formError: null }),
+      severity: db.severity.map(s => Object.assign({}, s, { tag: L.tag(s.severity_name), tsTag: L.tag(s.ticket_severity), approval: s.approval_required ? 'Analyst approves' : 'Approved automatically' })),
+      rules: db.rules.map(r => Object.assign({}, r, { active: r.is_active ? 'Yes' : 'No', activeTag: L.tag(r.is_active ? 'Approved' : 'Waiting') })),
+      config,
+      formOpen: !!form, form: form || {}, formTitle: form && form.window_id ? 'Edit maintenance window ' + form.window_id : 'Add maintenance window', formError,
+      hosts: L.uniq(db.alarms.map(a => a.host).concat(db.maintenance.map(m => m.host))), firstRef: this.firstRef, confirmRef: this.confirmRef,
+      onHost: e => this.setForm('host', e.target.value), onStart: e => this.setForm('start', e.target.value), onEnd: e => this.setForm('end', e.target.value), onDesc: e => this.setForm('description', e.target.value),
+      closeForm,
+      dlgKey: e => { if (e.key === 'Escape') this.setState({ form: null, confirm: null }); },
+      saveForm: () => {
+        const f = this.state.form;
+        if (!f.host.trim()) return this.setState({ formError: 'Host is required.' });
+        if (!f.start || !f.end) return this.setState({ formError: 'Start time and end time are required.' });
+        if (f.end <= f.start) return this.setState({ formError: 'End time must be after start time.' });
+        const w = { host: f.host.trim(), start_time: this.fromLocal(f.start), end_time: this.fromLocal(f.end), description: f.description.trim() || null };
+        if (f.window_id) w.window_id = f.window_id;
+        app.actions.saveWindow(w); closeForm();
+      },
+      confirmOpen: !!confirm, confirm: confirm || {},
+      cancelConfirm: () => this.setState({ confirm: null }),
+      doConfirm: () => {
+        app.actions.saveConfig(confirm.key, confirm.to);
+        this.setState(s => { const ed = Object.assign({}, s.edit); delete ed[confirm.key]; return { edit: ed, confirm: null }; });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

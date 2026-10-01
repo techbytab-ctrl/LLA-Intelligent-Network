@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div data-screen-label="Agent pipeline" style="padding:20px 24px 40px; display:flex; flex-direction:column; gap:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap;">
+    <div>
+      <h1 style="font-size:18px; font-weight:600; margin:0; line-height:1.3;">Agent pipeline</h1>
+      <p style="margin:2px 0 0; color:#5B6272;">The four agents that turn an uploaded alarm file into tickets, and how each one ran.</p>
+    </div>
+    <div style="display:flex; align-items:flex-end; gap:8px; flex-wrap:wrap;">
+      <label style="display:flex; flex-direction:column; gap:3px; font-size:11.5px; color:#4A5160;">
+        <span>From date</span>
+        <input type="date" value="{{ from }}" onChange="{{ onFrom }}" style="height:30px; border:1px solid #C9CDD6; border-radius:4px; padding:0 6px; background:#FFFFFF;">
+      </label>
+      <label style="display:flex; flex-direction:column; gap:3px; font-size:11.5px; color:#4A5160;">
+        <span>To date</span>
+        <input type="date" value="{{ to }}" onChange="{{ onTo }}" style="height:30px; border:1px solid #C9CDD6; border-radius:4px; padding:0 6px; background:#FFFFFF;">
+      </label>
+      <div style="display:flex; flex-direction:column; gap:3px; align-items:flex-end;">
+        <span style="font-size:11.5px; color:#5B6272; white-space:nowrap;">Last refresh {{ lastRefresh }}</span>
+        <button type="button" onClick="{{ refresh }}" style="height:30px; padding:0 12px; background:#FFFFFF; color:#1F2430; border:1px solid #C9CDD6; border-radius:4px; font-weight:500; cursor:pointer;" style-hover="background:#F5F6F8;">Refresh</button>
+      </div>
+    </div>
+  </div>
+
+  <p style="margin:0; font-size:12.5px; color:#4A5160;">{{ latestText }}</p>
+
+  <div style="display:flex; flex-direction:column; gap:0;">
+    <sc-for list="{{ agents }}" as="a" hint-placeholder-count="4">
+      <article id="{{ a.domId }}" style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px;">
+        <button type="button" aria-expanded="{{ a.expanded }}" aria-controls="{{ a.bodyId }}" onClick="{{ a.toggle }}" style="display:flex; flex-wrap:wrap; gap:12px 14px; align-items:flex-start; width:100%; padding:12px 14px; border:0; background:transparent; text-align:left; cursor:pointer; white-space:normal; border-radius:4px;" style-hover="background:#FBFBFC;">
+          <span style="{{ a.numStyle }}">{{ a.n }}</span>
+          <span style="display:flex; flex-direction:column; gap:4px; min-width:0; flex:1 1 260px;">
+            <span style="display:block; font-weight:600; font-size:13.5px; line-height:18px;">{{ a.name }}</span>
+            <span style="display:flex; align-items:center; gap:6px;">
+              <span style="{{ aiTag }}">AI</span>
+              <span style="{{ a.statusTag }}">{{ a.status }}</span>
+            </span>
+            <span style="font-size:12.5px; color:#4A5160; line-height:1.45; text-wrap:pretty;">{{ a.desc }}</span>
+            <span style="font-size:12px; color:#B03C14;">{{ a.toggleText }}</span>
+          </span>
+          <span style="flex:1 1 380px; min-width:0; display:grid; grid-template-columns:minmax(100px,1fr) minmax(190px,1.6fr) minmax(64px,auto); gap:14px;">
+          <span style="display:flex; flex-direction:column; gap:3px; min-width:0;">
+            <span style="font-size:11px; font-weight:600; color:#5B6272; letter-spacing:0.4px;">INPUT</span>
+            <span style="font-size:12.5px;">{{ a.input }}</span>
+          </span>
+          <span style="display:flex; flex-direction:column; gap:3px; min-width:0;">
+            <span style="font-size:11px; font-weight:600; color:#5B6272; letter-spacing:0.4px;">OUTPUT</span>
+            <sc-if value="{{ a.hasOutput }}" hint-placeholder-val="{{ true }}">
+              <span style="display:flex; flex-direction:column; gap:1px; font-size:12.5px;">
+                <sc-for list="{{ a.output }}" as="o" hint-placeholder-count="4">
+                  <span style="display:flex; justify-content:space-between; gap:10px;"><span style="color:#4A5160; white-space:nowrap;">{{ o.label }}</span><span style="font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap;">{{ o.value }}</span></span>
+                </sc-for>
+              </span>
+            </sc-if>
+            <sc-if value="{{ a.noOutput }}" hint-placeholder-val="{{ false }}"><span style="font-size:12.5px; color:#5B6272;">{{ a.outputEmpty }}</span></sc-if>
+          </span>
+          <span style="display:flex; flex-direction:column; gap:3px; min-width:0;">
+            <span style="font-size:11px; font-weight:600; color:#5B6272; letter-spacing:0.4px;">TIME</span>
+            <span style="display:flex; align-items:center; gap:6px; font-size:12.5px; font-variant-numeric:tabular-nums;"><sc-if value="{{ a.running }}" hint-placeholder-val="{{ false }}">{{ spinner }}</sc-if><span style="white-space:nowrap;">{{ a.time }}</span></span>
+          </span>
+          </span>
+        </button>
+
+        <sc-if value="{{ a.canRerun }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; padding:8px 14px 12px 64px;">
+            <span role="alert" style="font-size:12px; color:#9A1F17;">Upload {{ a.uploadId }} failed in this step. Run again reads the same file from the start.</span>
+            <button type="button" onClick="{{ a.rerun }}" style="height:28px; padding:0 12px; background:#C4441A; color:#FFFFFF; border:1px solid #C4441A; border-radius:4px; font-size:12px; font-weight:500; cursor:pointer;" style-hover="background:#A83A16;">Run again</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ a.expanded }}" hint-placeholder-val="{{ false }}">
+          <div id="{{ a.bodyId }}" style="border-top:1px solid #ECEEF2; padding:12px 14px 14px 64px; display:flex; flex-direction:column; gap:14px;">
+            <dl style="margin:0; display:grid; grid-template-columns:150px minmax(0,1fr); border:1px solid #ECEEF2; border-radius:4px; font-size:12.5px;">
+              <dt style="padding:6px 10px; background:#F9FAFB; color:#4A5160; border-bottom:1px solid #ECEEF2;">Run message</dt>
+              <dd style="margin:0; padding:6px 10px; border-bottom:1px solid #ECEEF2;"><code style="font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; background:#F5F6F8; border:1px solid #ECEEF2; border-radius:3px; padding:0 4px;">{{ a.message }}</code></dd>
+              <dt style="padding:6px 10px; background:#F9FAFB; color:#4A5160; border-bottom:1px solid #ECEEF2;">Sent when</dt>
+              <dd style="margin:0; padding:6px 10px; border-bottom:1px solid #ECEEF2;">{{ a.sentWhen }}</dd>
+              <dt style="padding:6px 10px; background:#F9FAFB; color:#4A5160; border-bottom:1px solid #ECEEF2;">Reads</dt>
+              <dd style="margin:0; padding:6px 10px; border-bottom:1px solid #ECEEF2; display:flex; flex-wrap:wrap; gap:4px;">
+                <sc-for list="{{ a.reads }}" as="t" hint-placeholder-count="3"><code style="font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:11.5px; background:#F5F6F8; border:1px solid #ECEEF2; border-radius:3px; padding:0 4px;">{{ t }}</code></sc-for>
+              </dd>
+              <dt style="padding:6px 10px; background:#F9FAFB; color:#4A5160; border-bottom:1px solid #ECEEF2;">Writes</dt>
+              <dd style="margin:0; padding:6px 10px; border-bottom:1px solid #ECEEF2; display:flex; flex-wrap:wrap; gap:4px;">
+                <sc-for list="{{ a.writes }}" as="t" hint-placeholder-count="3"><code style="font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:11.5px; background:#F5F6F8; border:1px solid #ECEEF2; border-radius:3px; padding:0 4px;">{{ t }}</code></sc-for>
+              </dd>
+              <dt style="padding:6px 10px; background:#F9FAFB; color:#4A5160;">Settings it uses</dt>
+              <dd style="margin:0; padding:6px 10px; display:flex; flex-direction:column; gap:2px;">
+                <sc-if value="{{ a.noSettings }}" hint-placeholder-val="{{ false }}"><span style="color:#5B6272;">None</span></sc-if>
+                <sc-for list="{{ a.settings }}" as="st" hint-placeholder-count="1">
+                  <span><code style="font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:11.5px;">{{ st.key }}</code> = {{ st.value }}</span>
+                </sc-for>
+                <sc-if value="{{ a.hasSettings }}" hint-placeholder-val="{{ false }}"><a href="#/settings" style="font-size:12px;">View in Settings</a></sc-if>
+              </dd>
+            </dl>
+
+            <section>
+              <h3 style="font-size:12.5px; font-weight:600; margin:0 0 6px;">Last reply from the agent</h3>
+              <div style="{{ a.replyStyle }}">{{ a.reply }}</div>
+            </section>
+
+            <section>
+              <h3 style="font-size:12.5px; font-weight:600; margin:0 0 6px;">Recent runs</h3>
+              <div style="border:1px solid #ECEEF2; border-radius:4px; overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+                  <thead><tr>
+                    <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:6px 10px; border-bottom:1px solid #ECEEF2; font-size:12px;">Upload</th>
+                    <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:6px 10px; border-bottom:1px solid #ECEEF2; font-size:12px; white-space:nowrap;">Started at</th>
+                    <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:6px 10px; border-bottom:1px solid #ECEEF2; font-size:12px;">Duration</th>
+                    <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:6px 10px; border-bottom:1px solid #ECEEF2; font-size:12px;">Status</th>
+                    <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:6px 10px; border-bottom:1px solid #ECEEF2; font-size:12px;">Result</th>
+                  </tr></thead>
+                  <tbody>
+                    <sc-for list="{{ a.runs }}" as="r" hint-placeholder-count="3">
+                      <tr>
+                        <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap;"><a href="{{ r.href }}">Upload {{ r.uploadId }}</a></td>
+                        <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap; font-variant-numeric:tabular-nums;">{{ r.started }}</td>
+                        <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap; font-variant-numeric:tabular-nums;">{{ r.duration }}</td>
+                        <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2;"><span style="{{ r.tag }}">{{ r.status }}</span></td>
+                        <td style="padding:6px 10px; border-bottom:1px solid #ECEEF2;">{{ r.result }}</td>
+                      </tr>
+                    </sc-for>
+                  </tbody>
+                </table>
+                <sc-if value="{{ a.noRuns }}" hint-placeholder-val="{{ false }}"><p style="margin:0; padding:10px; color:#5B6272;">No runs in the selected dates.</p></sc-if>
+              </div>
+            </section>
+
+            <p style="margin:0; font-size:12px; color:#5B6272;">Each agent finishes its work in one database statement, so a failed run leaves nothing half done and can be run again.</p>
+          </div>
+        </sc-if>
+      </article>
+      <sc-if value="{{ a.arrow }}" hint-placeholder-val="{{ true }}">
+        <div aria-hidden="true" style="text-align:center; color:#8A90A0; font-size:13px; line-height:22px;">↓</div>
+      </sc-if>
+    </sc-for>
+  </div>
+  <p style="margin:-6px 0 0; font-size:12.5px; color:#4A5160;">After ticketing, an analyst approves or rejects S1 and S2 tickets in the <a href="#/approvals">Approval queue</a>.</p>
+
+  <section aria-labelledby="uh-h" style="background:#FFFFFF; border:1px solid #D9DCE3; border-radius:4px;">
+    <div style="padding:10px 14px; border-bottom:1px solid #ECEEF2; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+      <h2 id="uh-h" style="font-size:13px; font-weight:600; margin:0;">Upload history</h2>
+      <button type="button" onClick="{{ exportCsv }}" style="height:28px; padding:0 10px; background:#FFFFFF; color:#1F2430; border:1px solid #C9CDD6; border-radius:4px; font-size:12px; font-weight:500; cursor:pointer;" style-hover="background:#F5F6F8;">Export CSV</button>
+    </div>
+    <sc-if value="{{ hasHistory }}" hint-placeholder-val="{{ true }}">
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+          <thead><tr>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;">Upload ID</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;">File name</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;">Uploaded by</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;">Uploaded at</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;">Status</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;">1 Normalization</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;">2 Dedup</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;">3 Correlation</th>
+            <th style="text-align:left; font-weight:600; color:#4A5160; background:#F7F8FA; padding:7px 10px; border-bottom:1px solid #D9DCE3; font-size:12px; white-space:nowrap;">4 Ticketing</th>
+          </tr></thead>
+          <tbody>
+            <sc-for list="{{ history }}" as="h" hint-placeholder-count="3">
+              <tr onClick="{{ h.open }}" style="cursor:pointer;" style-hover="background:#F9FAFB;">
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;"><a href="{{ h.href }}">{{ h.upload_id }}</a></td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;">{{ h.file_name }}</td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap;">{{ h.uploaded_by }}</td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2; white-space:nowrap; font-variant-numeric:tabular-nums;">{{ h.at }}</td>
+                <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;"><span style="{{ h.tag }}">{{ h.status }}</span></td>
+                <sc-for list="{{ h.cells }}" as="c" hint-placeholder-count="4">
+                  <td style="padding:7px 10px; border-bottom:1px solid #ECEEF2;"><span style="{{ c.tag }}">{{ c.label }}</span></td>
+                </sc-for>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+    </sc-if>
+    <sc-if value="{{ noHistory }}" hint-placeholder-val="{{ false }}"><p style="margin:0; padding:14px; color:#5B6272;">No uploads in the selected dates.</p></sc-if>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  day = d => { const p = x => String(x).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
+  initRange = () => { const t = new Date(); const f = new Date(); f.setDate(t.getDate() - 6); return { from: this.day(f), to: this.day(t) }; };
+  state = Object.assign(this.initRange(), {
+    lastRefresh: window.LLA.now(),
+    open: this.props.app.route.query.agent ? { [this.props.app.route.query.agent]: true } : {}
+  });
+
+  componentDidMount() {
+    const n = this.props.app.route.query.agent;
+    if (n) setTimeout(() => { const el = document.getElementById('agent-card-' + n); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64 }); }, 60);
+  }
+
+  static AGENTS = [
+    { name: 'Normalization Agent', desc: 'Turns the raw rows of an uploaded file into alarm records and rejects rows that cannot be read.', sentWhen: 'When the file is staged (raw rows written to alarm_raw)', reads: ['alarm_raw', 'alarm_severity', 'alarm'], writes: ['alarm', 'alarm_raw', 'upload_file', 'audit_event'], keys: ['loaded', 'updated', 'skipped', 'rejected'], settings: [] },
+    { name: 'Deduplication and Suppression Agent', desc: 'Removes alarms inside maintenance windows, duplicate alarms and short self healing alarms. The rest move on.', sentWhen: 'After the Normalization Agent reports back', reads: ['alarm', 'maintenance_window', 'pipeline_config'], writes: ['alarm', 'audit_event'], keys: ['suppressed_maintenance', 'suppressed_dedup', 'suppressed_debounce', 'survived'], settings: ['debounce_window_minutes'] },
+    { name: 'Correlation Agent', desc: 'Groups surviving alarms into incidents using the correlation rules and its own reasoning.', sentWhen: 'After the Deduplication and Suppression Agent reports back', reads: ['alarm', 'correlation_rule', 'pipeline_config', 'alarm_severity'], writes: ['incident', 'incident_alarm', 'alarm', 'audit_event'], keys: ['incidents_created', 'alarms_linked', 'by_rule', 'by_reasoning'], settings: ['correlation_window_minutes', 'rules'] },
+    { name: 'Ticketing Agent', desc: 'Creates one ticket for every incident. S3 and S4 are approved automatically, S1 and S2 wait for an analyst.', sentWhen: 'After the Correlation Agent reports back', reads: ['incident', 'incident_alarm', 'alarm', 'alarm_severity', 'ticket'], writes: ['ticket', 'audit_event'], keys: ['tickets_created', 'auto_approved', 'waiting_for_analyst'], settings: [] }
+  ];
+  static OUT_LABELS = { loaded: 'Loaded', updated: 'Updated', skipped: 'Skipped', rejected: 'Rejected', suppressed_maintenance: 'Maintenance', suppressed_dedup: 'Duplicates', suppressed_debounce: 'Debounce', survived: 'Survived', incidents_created: 'Incidents', alarms_linked: 'Alarms linked', by_rule: 'By rule', by_reasoning: 'By reasoning', tickets_created: 'Tickets', auto_approved: 'Auto approved', waiting_for_analyst: 'Waiting' };
+
+  reply(i, s, u) {
+    if (!s || s.state === 'Waiting') return 'No reply. This agent has not run for the latest upload.';
+    if (s.state === 'Running') return 'No reply yet. The agent is still running.';
+    if (s.state === 'Failed') return s.error || 'The agent reported a failure without an error text.';
+    const c = s.counts || {};
+    return [
+      () => `Normalized upload ${u.upload_id}: ${c.total} rows read, ${c.loaded} loaded, ${c.updated} updated, ${c.skipped} skipped, ${c.rejected} rejected.`,
+      () => `Processed ${c.processed} new alarms: ${c.suppressed_maintenance} suppressed for maintenance, ${c.suppressed_dedup} as duplicates, ${c.suppressed_debounce} by debounce. ${c.survived} survived.`,
+      () => `Created ${c.incidents_created} incidents and linked ${c.alarms_linked} alarms. ${c.by_rule != null ? c.by_rule : 0} grouped by rule, ${c.by_reasoning != null ? c.by_reasoning : 0} by agent reasoning.`,
+      () => `Created ${c.tickets_created} tickets. ${c.auto_approved} approved automatically, ${c.waiting_for_analyst} waiting for an analyst.`
+    ][i]();
+  }
+
+  renderVals() {
+    const app = this.props.app; const db = app.db; const L = window.LLA;
+    const { from, to, lastRefresh, open } = this.state;
+    const A = Component.AGENTS, OL = Component.OUT_LABELS;
+    const inRange = db.uploads.filter(u => L.inRange(u.uploaded_at, from, to)).sort((a, b) => a.uploaded_at < b.uploaded_at ? 1 : a.uploaded_at > b.uploaded_at ? -1 : b.upload_id - a.upload_id);
+    const latest = inRange[0];
+    const stateOf = s => !s || s.state === 'Waiting' ? 'Idle' : s.state;
+    const cfg = k => (db.config.find(c => c.config_key === k) || {}).config_value;
+    const rawCount = id => db.raw.filter(r => r.upload_id === id).length;
+    const tones = { Idle: ['#FFFFFF', '#5B6272', '#C9CDD6'], Running: ['#FBF5DE', '#715400', '#E7DBA6'], Done: ['#E9F4EC', '#1D6436', '#C2DDCB'], Failed: ['#FBEBEA', '#9A1F17', '#EDC6C2'] };
+    const shortResult = (i, s) => {
+      if (!s || s.state === 'Waiting') return 'Not run';
+      if (s.state === 'Running') return 'In progress';
+      if (s.state === 'Failed') return 'Failed, nothing written';
+      const c = s.counts || {};
+      return A[i].keys.map(k => `${OL[k]} ${c[k] != null ? c[k] : 0}`).join(', ');
+    };
+
+    const agents = A.map((ag, i) => {
+      const steps = latest && latest.run ? latest.run.steps : [];
+      const s = steps[i]; const prev = steps[i - 1];
+      const status = stateOf(s);
+      const ran = status !== 'Idle';
+      let input = '—';
+      if (latest && ran) {
+        if (i === 0) input = rawCount(latest.upload_id) + ' raw rows';
+        else if (prev && prev.counts) input = [prev.counts.loaded + ' new alarms', prev.counts.survived + ' surviving alarms', prev.counts.incidents_created + ' incidents without a ticket'][i - 1];
+      }
+      const output = s && s.state === 'Done' && s.counts ? ag.keys.map(k => ({ label: OL[k], value: s.counts[k] != null ? s.counts[k] : 0 })) : [];
+      const settings = [];
+      ag.settings.forEach(k => {
+        if (k === 'rules') { const act = db.rules.filter(r => r.is_active).map(r => r.rule_code); settings.push({ key: 'active correlation rules', value: act.length ? act.join(', ') : 'none' }); }
+        else settings.push({ key: k, value: cfg(k) });
+      });
+      const n = i + 1; const isOpen = !!open[n];
+      const failed = status === 'Failed';
+      return {
+        n, domId: 'agent-card-' + n, bodyId: 'agent-body-' + n, name: ag.name, desc: ag.desc,
+        status, statusTag: L.tag(status), running: status === 'Running',
+        numStyle: { flex: 'none', width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 12, background: tones[status][0], color: tones[status][1], border: '1px solid ' + tones[status][2] },
+        input: latest ? input : 'Not run yet',
+        output, hasOutput: output.length > 0, noOutput: output.length === 0,
+        outputEmpty: !latest ? 'Not run yet' : failed ? 'Failed, nothing written' : status === 'Running' ? 'Waiting for reply' : '—',
+        time: !latest || !ran ? '—' : (L.durationText(s) || '—'),
+        expanded: isOpen, toggleText: isOpen ? 'Hide details' : 'Show details',
+        toggle: () => this.setState(st => ({ open: Object.assign({}, st.open, { [n]: !st.open[n] }) })),
+        canRerun: i === 0 && failed && !!latest, uploadId: latest ? latest.upload_id : '', rerun: () => app.actions.runUpload(latest.upload_id),
+        message: s ? s.message : (i === 0 ? 'Normalize upload <id>' : ['', 'Run deduplication and suppression', 'Run correlation', 'Run ticketing'][i]),
+        sentWhen: ag.sentWhen, reads: ag.reads, writes: ag.writes,
+        settings, hasSettings: settings.length > 0, noSettings: settings.length === 0,
+        reply: latest ? this.reply(i, s, latest) : 'No reply. There are no uploads in the selected dates.',
+        replyStyle: failed
+          ? { border: '1px solid #EDC6C2', background: '#FBEBEA', color: '#9A1F17', borderRadius: 4, padding: '8px 10px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', fontSize: 12, whiteSpace: 'pre-wrap' }
+          : { border: '1px solid #ECEEF2', background: '#F9FAFB', borderRadius: 4, padding: '8px 10px', fontSize: 12.5, lineHeight: 1.5 },
+        runs: inRange.map(u => {
+          const st = u.run ? u.run.steps[i] : null; const stt = stateOf(st);
+          return { uploadId: u.upload_id, href: '#/uploads/' + u.upload_id, started: st && st.started_at ? L.fmtTime(st.started_at) : '—', duration: (st && L.durationText(st)) || '—', status: stt === 'Idle' ? 'Not run' : stt, tag: L.tag(stt), result: shortResult(i, st) };
+        }),
+        noRuns: inRange.length === 0,
+        arrow: i < A.length - 1
+      };
+    });
+
+    const cellLabel = s => { const st = stateOf(s); return st === 'Idle' ? 'Not run' : st; };
+    const history = inRange.map(u => ({
+      upload_id: u.upload_id, file_name: u.file_name, uploaded_by: u.uploaded_by, at: L.fmtTime(u.uploaded_at), status: u.status, tag: L.tag(u.status),
+      cells: [0, 1, 2, 3].map(i => { const s = u.run ? u.run.steps[i] : null; return { label: cellLabel(s), tag: L.tag(stateOf(s)) }; }),
+      href: '#/uploads/' + u.upload_id, open: () => app.nav('/uploads/' + u.upload_id)
+    }));
+
+    return {
+      from, to, lastRefresh: L.fmtTime(lastRefresh),
+      onFrom: e => this.setState({ from: e.target.value }), onTo: e => this.setState({ to: e.target.value }),
+      refresh: () => this.setState({ lastRefresh: L.now() }),
+      latestText: latest ? `Figures below are from the latest run in these dates: upload ${latest.upload_id} (${latest.file_name}), uploaded ${L.fmtTime(latest.uploaded_at)}.` : 'No uploads in the selected dates, so no agent has run.',
+      agents, aiTag: L.tag('RULE'),
+      history, hasHistory: history.length > 0, noHistory: history.length === 0,
+      exportCsv: () => L.downloadCSV('upload_history.csv', ['upload_id', 'file_name', 'uploaded_by', 'uploaded_at', 'status', 'agent_1_normalization', 'agent_2_dedup', 'agent_3_correlation', 'agent_4_ticketing'],
+        history.map(h => [h.upload_id, h.file_name, h.uploaded_by, h.at, h.status].concat(h.cells.map(c => c.label)))),
+      spinner: React.createElement('span', { 'aria-hidden': true, style: { width: 12, height: 12, border: '2px solid #E7DBA6', borderTopColor: '#715400', borderRadius: '50%', display: 'inline-block', animation: 'llaspin 0.8s linear infinite' } })
+    };
+  }
+}
+</script>
+</body>
+</html>
